@@ -697,11 +697,8 @@
             }
         });
         
-        // 防止页面滚动
-        document.addEventListener('touchmove', function(e) {
-            if (e.target.tagName === 'INPUT') return;
-            e.preventDefault();
-        }, { passive: false });
+        // 允许页面正常滚动
+        // 移除 touchmove 阻止默认行为的代码
     </script>
 </body>
 </html>
