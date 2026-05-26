@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>金币打卡</title>
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+    <style>
+        :root {
+            --bg: #000;
+            --card: #1a1a1a;
+            --text: #fff;
+            --sub: #888;
+            --gold: #f5a623;
+            --green: #00c853;
+            --red: #ff1744;
+            --border: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 16px;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: var(--sub);
+            font-size: 14px;
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .input-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--sub);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 16px;
+            background: #2a2a2a;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            -webkit-appearance: none;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold), #e69500);
+            color: #000;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: #333;
+            color: var(--text);
+            margin-top: 12px;
+        }
+        
+        .btn-danger {
+            background: var(--red);
+            color: white;
+            margin-top: 12px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 16px;
+            background: #2a2a2a;
+            border-radius: 12px;
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .positive { color: var(--green); }
+        .negative { color: var(--red); }
+        .neutral { color: var(--sub); }
+        
+        .progress {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: #2a2a2a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), #00e676);
+            border-radius: 6px;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 8px;
+            color: var(--sub);
+        }
+        
+        .prediction {
+            background: rgba(245, 166, 35, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid rgba(245, 166, 35, 0.2);
+        }
+        
+        .prediction-title {
+            color: var(--gold);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .prediction-date {
+            color: var(--gold);
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .history {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 0 12px;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .date {
+            color: var(--sub);
+            font-size: 14px;
+        }
+        
+        .amount {
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .change {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--sub);
+        }
+        
+        .backup-section {
+            background: rgba(0, 200, 83, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid rgba(0, 200, 83, 0.2);
+        }
+        
+        .backup-title {
+            color: var(--green);
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .backup-text {
+            font-size: 12px;
+            color: var(--sub);
+            line-height: 1.5;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--green);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .toast.error {
+            background: var(--red);
+            color: white;
+        }
+        
+        .info {
+            font-size: 12px;
+            color: var(--sub);
+            text-align: center;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 8px;
+            }
+            
+            .card {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ 实况金币打卡</h1>
+            <div class="subtitle">数据存手机本地，清缓存不丢失</div>
+        </header>
+
+        <div class="card">
+            <div class="input-group">
+                <label>今日金币数量</label>
+                <input type="number" id="todayGold" placeholder="输入今天获得的金币" min="0" inputmode="numeric">
+            </div>
+            <div class="input-group">
+                <label>目标金币数量</label>
+                <input type="number" id="targetGold" placeholder="想要达到的目标" min="0" value="100000" inputmode="numeric">
+            </div>
+            <button class="btn btn-primary" id="saveBtn">保存今日记录</button>
+        </div>
+
+        <div class="card">
+            <h2>📊 今日统计</h2>
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-value" id="todayAmount">0</div>
+                    <div class="stat-label">今日金币</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="yesterdayAmount">0</div>
+                    <div class="stat-label">昨日金币</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="changeAmount">+0</div>
+                    <div class="stat-label">较昨日变化</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="growthRate">0%</div>
+                    <div class="stat-label">增长率</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎯 目标进度</h2>
+            <div class="progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="currentProgress">0/0</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+            <div class="prediction" id="predictionSection" style="display: none;">
+                <div class="prediction-title">预计完成日期</div>
+                <div class="prediction-date" id="predictionDate">--</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📅 历史记录</h2>
+            <div class="history" id="historyList">
+                <div class="empty-state">📝 暂无记录，开始打卡吧！</div>
+            </div>
+            <button class="btn btn-danger" id="clearBtn">清空所有数据</button>
+            <button class="btn btn-secondary" id="exportBtn">导出数据备份</button>
+        </div>
+
+        <div class="backup-section">
+            <div class="backup-title">💾 数据安全说明</div>
+            <div class="backup-text">
+                数据存储在手机本地 IndexedDB 中，不会因清缓存丢失。<br>
+                如需更换设备，请先导出备份文件。<br>
+                建议每周截图保存进度。
+            </div>
+        </div>
+
+        <div class="info">
+            添加到主屏幕：在 Safari 中打开 → 分享 → 添加到主屏幕<br>
+            数据存储在 IndexedDB 中，清缓存不会丢失
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 使用 IndexedDB 存储数据（比 localStorage 更可靠）
+        const DB_NAME = 'GoldTrackerDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'goldData';
+        
+        let db = null;
+        let goldData = { history: [], target: 100000 };
+        
+        // 初始化数据库
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                
+                request.onsuccess = () => {
+                    db = request.result;
+                    loadData().then(resolve);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+            });
+        }
+        
+        // 加载数据
+        function loadData() {
+            return new Promise((resolve) => {
+                if (!db) {
+                    resolve(goldData);
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get('main');
+                
+                request.onsuccess = () => {
+                    if (request.result) {
+                        goldData = request.result;
+                    }
+                    resolve(goldData);
+                };
+                
+                request.onerror = () => {
+                    console.warn('加载数据失败，使用默认数据');
+                    resolve(goldData);
+                };
+            });
+        }
+        
+        // 保存数据
+        function saveData() {
+            return new Promise((resolve) => {
+                if (!db) {
+                    resolve(false);
+                    return;
+                }
+                
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(goldData, 'main');
+                
+                request.onsuccess = () => resolve(true);
+                request.onerror = () => resolve(false);
+            });
+        }
+        
+        // 显示提示
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast' + (isError ? ' error' : '');
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        // 渲染界面
+        async function render() {
+            await loadData();
+            const history = goldData.history;
+            const today = new Date().toISOString().split('T')[0];
+            
+            // 今日记录
+            const todayRecord = history.find(r => r.date === today);
+            document.getElementById('todayAmount').textContent = todayRecord ? todayRecord.amount.toLocaleString() : '0';
+            
+            // 昨日记录
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayDate = yesterday.toISOString().split('T')[0];
+            const yesterdayRecord = history.find(r => r.date === yesterdayDate);
+            document.getElementById('yesterdayAmount').textContent = yesterdayRecord ? yesterdayRecord.amount.toLocaleString() : '0';
+            
+            // 变化和增长率
+            if (todayRecord && yesterdayRecord) {
+                const change = todayRecord.amount - yesterdayRecord.amount;
+                const growthRate = yesterdayRecord.amount > 0 ? 
+                    ((change / yesterdayRecord.amount) * 100).toFixed(1) : '∞';
+                
+                document.getElementById('changeAmount').textContent = (change >= 0 ? '+' : '') + change.toLocaleString();
+                document.getElementById('changeAmount').className = 'stat-value ' + (change >= 0 ? 'positive' : 'negative');
+                
+                document.getElementById('growthRate').textContent = growthRate + '%';
+                document.getElementById('growthRate').className = 'stat-value ' + (parseFloat(growthRate) >= 0 ? 'positive' : 'negative');
+            } else {
+                document.getElementById('changeAmount').textContent = '+0';
+                document.getElementById('changeAmount').className = 'stat-value neutral';
+                document.getElementById('growthRate').textContent = '0%';
+                document.getElementById('growthRate').className = 'stat-value neutral';
+            }
+            
+            // 目标进度
+            const totalGold = history.reduce((sum, r) => sum + r.amount, 0);
+            const target = goldData.target;
+            const progressPercent = target > 0 ? Math.min((totalGold / target) * 100, 100) : 0;
+            
+            document.getElementById('progressFill').style.width = progressPercent + '%';
+            document.getElementById('currentProgress').textContent = totalGold.toLocaleString() + '/' + target.toLocaleString();
+            document.getElementById('progressPercent').textContent = progressPercent.toFixed(1) + '%';
+            
+            // 预计完成日期
+            if (history.length >= 2) {
+                const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+                let totalGrowth = 0;
+                let growthDays = 0;
+                
+                for (let i = 1; i < sortedHistory.length; i++) {
+                    const dayDiff = (new Date(sortedHistory[i].date) - new Date(sortedHistory[i-1].date)) / (1000 * 60 * 60 * 24);
+                    if (dayDiff <= 7) {
+                        totalGrowth += sortedHistory[i].amount;
+                        growthDays++;
+                    }
+                }
+                
+                const avgDailyGrowth = growthDays > 0 ? totalGrowth / growthDays : 0;
+                if (avgDailyGrowth > 0 && totalGold < target) {
+                    const daysRemaining = Math.ceil((target - totalGold) / avgDailyGrowth);
+                    const completionDate = new Date();
+                    completionDate.setDate(completionDate.getDate() + daysRemaining);
+                    
+                    document.getElementById('predictionSection').style.display = 'block';
+                    document.getElementById('predictionDate').textContent = completionDate.toLocaleDateString('zh-CN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                } else {
+                    document.getElementById('predictionSection').style.display = 'none';
+                }
+            } else {
+                document.getElementById('predictionSection').style.display = 'none';
+            }
+            
+            // 历史记录
+            const historyList = document.getElementById('historyList');
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="empty-state">📝 暂无记录，开始打卡吧！</div>';
+            } else {
+                const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+                historyList.innerHTML = sortedHistory.map((record, index) => {
+                    const date = new Date(record.date);
+                    const dateStr = date.toLocaleDateString('zh-CN', {
+                        month: 'short',
+                        day: 'numeric',
+                        weekday: 'short'
+                    });
+                    
+                    let changeHtml = '';
+                    if (index < sortedHistory.length - 1) {
+                        const change = record.amount - sortedHistory[index + 1].amount;
+                        const changeClass = change >= 0 ? 'positive' : 'negative';
+                        const changeSymbol = change >= 0 ? '+' : '';
+                        changeHtml = `<span class="change ${changeClass}">${changeSymbol}${change}</span>`;
+                    }
+                    
+                    return `
+                        <div class="history-item">
+                            <div class="date">${dateStr}</div>
+                            <div class="amount">${record.amount.toLocaleString()} 金币</div>
+                            ${changeHtml}
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // 目标输入框
+            document.getElementById('targetGold').value = target;
+        }
+        
+        // 保存按钮点击
+        document.getElementById('saveBtn').onclick = async function() {
+            const todayGold = parseInt(document.getElementById('todayGold').value);
+            const targetGold = parseInt(document.getElementById('targetGold').value);
+            
+            if (isNaN(todayGold) || todayGold < 0) {
+                showToast('请输入有效的金币数量', true);
+                return;
+            }
+            
+            if (isNaN(targetGold) || targetGold <= 0) {
+                showToast('请输入有效的目标数量', true);
+                return;
+            }
+            
+            await loadData();
+            const today = new Date().toISOString().split('T')[0];
+            
+            // 更新或添加今日记录
+            const existingIndex = goldData.history.findIndex(r => r.date === today);
+            if (existingIndex !== -1) {
+                goldData.history[existingIndex].amount = todayGold;
+            } else {
+                goldData.history.push({ date: today, amount: todayGold });
+            }
+            
+            // 更新目标
+            goldData.target = targetGold;
+            
+            // 保存数据
+            if (await saveData()) {
+                showToast('✅ 保存成功！');
+                render();
+                document.getElementById('todayGold').value = '';
+            } else {
+                showToast('保存失败，请重试', true);
+            }
+        };
+        
+        // 清空按钮
+        document.getElementById('clearBtn').onclick = async function() {
+            if (confirm('⚠️ 确定要清空所有数据吗？此操作不可撤销！')) {
+                goldData = { history: [], target: 100000 };
+                if (await saveData()) {
+                    showToast('数据已清空');
+                    render();
+                } else {
+                    showToast('清空失败', true);
+                }
+            }
+        };
+        
+        // 导出按钮
+        document.getElementById('exportBtn').onclick = async function() {
+            await loadData();
+            const dataStr = JSON.stringify(goldData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '金币打卡数据备份.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('备份文件已导出');
+        };
+        
+        // 目标输入框实时保存
+        document.getElementById('targetGold').addEventListener('change', async function() {
+            const targetGold = parseInt(this.value);
+            if (!isNaN(targetGold) && targetGold > 0) {
+                await loadData();
+                goldData.target = targetGold;
+                await saveData();
+                render();
+                showToast('目标已更新');
+            }
+        });
+        
+        // 键盘快捷键
+        document.getElementById('todayGold').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('saveBtn').click();
+            }
+        });
+        
+        document.getElementById('targetGold').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('saveBtn').click();
+            }
+        });
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await initDB();
+                await render();
+                console.log('应用初始化完成');
+            } catch (error) {
+                console.error('初始化失败:', error);
+                showToast('初始化失败，使用本地存储', true);
+                await render();
+            }
+        });
+        
+        // 防止页面滚动
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.tagName === 'INPUT') return;
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
