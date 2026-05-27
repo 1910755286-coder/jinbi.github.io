@@ -607,32 +607,35 @@
                 document.getElementById('growthRate').className = 'stat-value neutral';
             }
             
-            // 目标进度
-            const totalGold = history.reduce((sum, r) => sum + r.amount, 0);
+            // 目标进度（最后一天的金币总数）
+            const lastRecord = history.length > 0 ? history[history.length - 1].amount : 0;
             const target = goldData.target;
-            const progressPercent = target > 0 ? Math.min((totalGold / target) * 100, 100) : 0;
+            const progressPercent = target > 0 ? Math.min((lastRecord / target) * 100, 100) : 0;
             
             document.getElementById('progressFill').style.width = progressPercent + '%';
-            document.getElementById('currentProgress').textContent = totalGold.toLocaleString() + '/' + target.toLocaleString();
+            document.getElementById('currentProgress').textContent = lastRecord.toLocaleString() + '/' + target.toLocaleString();
             document.getElementById('progressPercent').textContent = progressPercent.toFixed(1) + '%';
             
-            // 预计完成日期
+            // 预计完成日期（基于历史每日获得计算）
             if (history.length >= 2) {
                 const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
-                let totalGrowth = 0;
-                let growthDays = 0;
+                let totalEarned = 0;
+                let earnedDays = 0;
                 
                 for (let i = 1; i < sortedHistory.length; i++) {
                     const dayDiff = (new Date(sortedHistory[i].date) - new Date(sortedHistory[i-1].date)) / (1000 * 60 * 60 * 24);
                     if (dayDiff <= 7) {
-                        totalGrowth += sortedHistory[i].amount;
-                        growthDays++;
+                        const earned = sortedHistory[i].amount - sortedHistory[i-1].amount;
+                        if (earned > 0) {
+                            totalEarned += earned;
+                            earnedDays++;
+                        }
                     }
                 }
                 
-                const avgDailyGrowth = growthDays > 0 ? totalGrowth / growthDays : 0;
-                if (avgDailyGrowth > 0 && totalGold < target) {
-                    const daysRemaining = Math.ceil((target - totalGold) / avgDailyGrowth);
+                const avgDailyEarned = earnedDays > 0 ? totalEarned / earnedDays : 0;
+                if (avgDailyEarned > 0 && lastRecord < target) {
+                    const daysRemaining = Math.ceil((target - lastRecord) / avgDailyEarned);
                     const completionDate = new Date();
                     completionDate.setDate(completionDate.getDate() + daysRemaining);
                     
