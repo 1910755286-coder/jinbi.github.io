@@ -295,12 +295,82 @@
             color: white;
         }
         
+        .earned-hint {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(245, 166, 35, 0.12);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text);
+            border: 1px solid rgba(245, 166, 35, 0.25);
+        }
+        
+        .earned-hint .earned-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        
         .info {
             font-size: 12px;
             color: var(--sub);
             text-align: center;
             margin-top: 20px;
             line-height: 1.5;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid var(--border);
+        }
+        
+        .modal h3 {
+            color: var(--gold);
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        
+        .modal input[type="date"] {
+            color-scheme: dark;
+        }
+        
+        .modal .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        
+        .modal .btn-row .btn {
+            flex: 1;
+            margin-top: 0;
+        }
+        
+        .modal .current-record {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--sub);
         }
         
         @media (max-width: 480px) {
@@ -323,14 +393,16 @@
 
         <div class="card">
             <div class="input-group">
-                <label>今日金币数量</label>
-                <input type="number" id="todayGold" placeholder="输入今天获得的金币" min="0" inputmode="numeric">
+                <label>今日金币总数</label>
+                <input type="number" id="todayGold" placeholder="输入金币总数" min="0" inputmode="numeric">
+                <div class="earned-hint" id="earnedHint" style="display:none;"></div>
             </div>
             <div class="input-group">
                 <label>目标金币数量</label>
                 <input type="number" id="targetGold" placeholder="想要达到的目标" min="0" value="100000" inputmode="numeric">
             </div>
             <button class="btn btn-primary" id="saveBtn">保存今日记录</button>
+            <button class="btn btn-secondary" id="editBtn" style="margin-top:12px;">补录/修改历史记录</button>
         </div>
 
         <div class="card">
@@ -345,8 +417,8 @@
                     <div class="stat-label">昨日金币</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value" id="changeAmount">+0</div>
-                    <div class="stat-label">较昨日变化</div>
+                    <div class="stat-value" id="todayEarned">+0</div>
+                    <div class="stat-label">今日获得</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value" id="growthRate">0%</div>
@@ -397,6 +469,25 @@
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3>补录/修改记录</h3>
+            <div class="input-group">
+                <label>选择日期</label>
+                <input type="date" id="editDate">
+            </div>
+            <div class="input-group">
+                <label>该日金币总数</label>
+                <input type="number" id="editAmount" placeholder="输入该日金币总数" min="0" inputmode="numeric">
+            </div>
+            <div class="current-record" id="editCurrent" style="display:none;"></div>
+            <div class="btn-row">
+                <button class="btn btn-secondary" id="editCancel">取消</button>
+                <button class="btn btn-primary" id="editSave">保存</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // 使用 IndexedDB 存储数据（比 localStorage 更可靠）
@@ -497,20 +588,21 @@
             const yesterdayRecord = history.find(r => r.date === yesterdayDate);
             document.getElementById('yesterdayAmount').textContent = yesterdayRecord ? yesterdayRecord.amount.toLocaleString() : '0';
             
-            // 变化和增长率
+            // 今日获得
             if (todayRecord && yesterdayRecord) {
-                const change = todayRecord.amount - yesterdayRecord.amount;
+                const earned = todayRecord.amount - yesterdayRecord.amount;
+                const sign = earned >= 0 ? '+' : '';
+                document.getElementById('todayEarned').textContent = sign + earned.toLocaleString();
+                document.getElementById('todayEarned').className = 'stat-value ' + (earned >= 0 ? 'positive' : 'negative');
+                
+                // 增长率
                 const growthRate = yesterdayRecord.amount > 0 ? 
-                    ((change / yesterdayRecord.amount) * 100).toFixed(1) : '∞';
-                
-                document.getElementById('changeAmount').textContent = (change >= 0 ? '+' : '') + change.toLocaleString();
-                document.getElementById('changeAmount').className = 'stat-value ' + (change >= 0 ? 'positive' : 'negative');
-                
+                    ((earned / yesterdayRecord.amount) * 100).toFixed(1) : '∞';
                 document.getElementById('growthRate').textContent = growthRate + '%';
                 document.getElementById('growthRate').className = 'stat-value ' + (parseFloat(growthRate) >= 0 ? 'positive' : 'negative');
             } else {
-                document.getElementById('changeAmount').textContent = '+0';
-                document.getElementById('changeAmount').className = 'stat-value neutral';
+                document.getElementById('todayEarned').textContent = '+0';
+                document.getElementById('todayEarned').className = 'stat-value neutral';
                 document.getElementById('growthRate').textContent = '0%';
                 document.getElementById('growthRate').className = 'stat-value neutral';
             }
@@ -671,6 +763,33 @@
             }
         });
         
+        // 输入总数时自动计算今天获得了多少
+        document.getElementById('todayGold').addEventListener('input', async function() {
+            const total = parseInt(this.value);
+            const earnedHint = document.getElementById('earnedHint');
+            
+            if (isNaN(total) || total < 0) {
+                earnedHint.style.display = 'none';
+                return;
+            }
+            
+            await loadData();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayDate = yesterday.toISOString().split('T')[0];
+            const yesterdayRecord = goldData.history.find(r => r.date === yesterdayDate);
+            
+            if (yesterdayRecord) {
+                const earned = total - yesterdayRecord.amount;
+                const sign = earned >= 0 ? '+' : '';
+                earnedHint.style.display = 'block';
+                earnedHint.innerHTML = `今天获得了 <span class="earned-value">${sign}${earned.toLocaleString()}</span> 金币`;
+            } else {
+                earnedHint.style.display = 'block';
+                earnedHint.innerHTML = '暂无昨日数据，这是你的首次记录';
+            }
+        });
+        
         // 键盘快捷键
         document.getElementById('todayGold').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -684,18 +803,102 @@
             }
         });
         
-        // 页面加载时初始化
+        // 页面加载时初始化并绑定事件
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 await initDB();
                 await render();
                 console.log('应用初始化完成');
+                
+                // 绑定补录/修改按钮事件
+                document.getElementById('editBtn').onclick = async function() {
+                    await loadData();
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('editDate').value = today;
+                    document.getElementById('editAmount').value = '';
+                    document.getElementById('editCurrent').style.display = 'none';
+                    document.getElementById('editModal').classList.add('active');
+                };
+                
+                document.getElementById('editCancel').onclick = function() {
+                    document.getElementById('editModal').classList.remove('active');
+                };
+                
+                // 日期变化时显示已有记录
+                document.getElementById('editDate').addEventListener('change', async function() {
+                    const date = this.value;
+                    const currentEl = document.getElementById('editCurrent');
+                    
+                    if (!date) {
+                        currentEl.style.display = 'none';
+                        return;
+                    }
+                    
+                    await loadData();
+                    const existing = goldData.history.find(r => r.date === date);
+                    
+                    if (existing) {
+                        currentEl.style.display = 'block';
+                        currentEl.textContent = `该日已有记录：${existing.amount.toLocaleString()} 金币`;
+                    } else {
+                        currentEl.style.display = 'none';
+                    }
+                });
+                
+                // 保存修改
+                document.getElementById('editSave').onclick = async function() {
+                    const date = document.getElementById('editDate').value;
+                    const amount = parseInt(document.getElementById('editAmount').value);
+                    
+                    if (!date) {
+                        showToast('请选择日期', true);
+                        return;
+                    }
+                    
+                    if (isNaN(amount) || amount < 0) {
+                        showToast('请输入有效的金币数量', true);
+                        return;
+                    }
+                    
+                    await loadData();
+                    const existingIndex = goldData.history.findIndex(r => r.date === date);
+                    
+                    if (existingIndex !== -1) {
+                        // 修改已有记录
+                        goldData.history[existingIndex].amount = amount;
+                        showToast(`已修改 ${date} 的记录为 ${amount.toLocaleString()} 金币`);
+                    } else {
+                        // 新增记录
+                        goldData.history.push({ date, amount });
+                        showToast(`已添加 ${date} 的记录：${amount.toLocaleString()} 金币`);
+                    }
+                    
+                    // 按日期排序（确保顺序）
+                    goldData.history.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    
+                    if (await saveData()) {
+                        render();
+                        document.getElementById('editModal').classList.remove('active');
+                    } else {
+                        showToast('保存失败', true);
+                    }
+                };
+                
+                // 关闭模态框点击背景
+                document.getElementById('editModal').onclick = function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                };
+                
             } catch (error) {
                 console.error('初始化失败:', error);
                 showToast('初始化失败，使用本地存储', true);
                 await render();
             }
         });
+        
+
         
         // 允许页面正常滚动
         // 移除 touchmove 阻止默认行为的代码
