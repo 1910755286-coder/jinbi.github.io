@@ -4,409 +4,434 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#dce8f8">
     <title>金币打卡</title>
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
     <style>
         :root {
-            --bg: #000;
-            --card: #1a1a1a;
-            --text: #fff;
-            --sub: #888;
-            --gold: #f5a623;
-            --green: #00c853;
-            --red: #ff1744;
-            --border: #333;
+            --pitch-a: #e9f1fb;
+            --pitch-b: #dce8f8;
+            --line: rgba(47, 111, 237, 0.26);
+            --surface: rgba(255, 255, 255, 0.82);
+            --surface-solid: #ffffff;
+            --surface-2: #f4f7f5;
+            --border: rgba(20, 24, 31, 0.08);
+            --border-strong: rgba(20, 24, 31, 0.14);
+            --text: #16201b;
+            --text-soft: #455049;
+            --muted: #8a958d;
+            --gold: #c2932b;
+            --gold-2: #dcb24c;
+            --gold-ink: #3a2c05;
+            --gold-soft: rgba(194, 147, 43, 0.12);
+            --green: #2f6fed;
+            --green-deep: #1f5ad1;
+            --green-soft: rgba(47, 111, 237, 0.10);
+            --red: #df5048;
+            --red-soft: rgba(223, 80, 72, 0.10);
+            --radius: 22px;
+            --radius-sm: 14px;
+            --shadow: 0 12px 32px rgba(20, 60, 40, 0.12);
+            --shadow-sm: 0 3px 12px rgba(20, 60, 40, 0.08);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
-        
+
         body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             min-height: 100vh;
-            padding: 16px;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            padding: 18px 16px calc(30px + env(safe-area-inset-bottom));
+            padding-top: calc(16px + env(safe-area-inset-top));
+            position: relative;
         }
-        
-        .container {
-            max-width: 420px;
-            margin: 0 auto;
+
+        /* ===== 可见的足球场背景 ===== */
+        .pitch-bg {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+            background:
+                radial-gradient(circle at 50% 50%, transparent 86px, var(--line) 86px, var(--line) 90px, transparent 90px),
+                linear-gradient(180deg, transparent 5.4%, var(--line) 5.4%, var(--line) 5.9%, transparent 5.9%),
+                linear-gradient(180deg, transparent 94.1%, var(--line) 94.1%, var(--line) 94.6%, transparent 94.6%),
+                linear-gradient(90deg, transparent 3.4%, var(--line) 3.4%, var(--line) 3.9%, transparent 3.9%),
+                linear-gradient(90deg, transparent 96.1%, var(--line) 96.1%, var(--line) 96.6%, transparent 96.6%),
+                linear-gradient(90deg, transparent 49.5%, var(--line) 49.5%, var(--line) 50.5%, transparent 50.5%),
+                linear-gradient(180deg, var(--pitch-a), var(--pitch-b));
         }
-        
-        header {
-            text-align: center;
-            padding: 20px 0;
+        .bg-ball {
+            position: absolute; color: rgba(47, 111, 237, 0.07);
         }
-        
-        h1 {
-            font-size: 24px;
-            color: var(--gold);
-            margin-bottom: 8px;
+        .bg-ball.tl { top: -70px; left: -60px; width: 260px; height: 260px; }
+        .bg-ball.br { bottom: -90px; right: -70px; width: 300px; height: 300px; transform: rotate(18deg); }
+
+        .container { max-width: 440px; margin: 0 auto; }
+
+        /* ===== 头部队徽 ===== */
+        header { text-align: center; padding: 6px 0 20px; }
+        .brand { display: inline-flex; align-items: center; gap: 13px; }
+        .ball-badge {
+            width: 48px; height: 48px; border-radius: 50%; flex: none;
+            background: linear-gradient(135deg, #4f8ef7, var(--green-deep));
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 16px rgba(31, 90, 209, 0.35), inset 0 1px 2px rgba(255,255,255,0.35);
         }
-        
-        .subtitle {
-            color: var(--sub);
-            font-size: 14px;
-        }
-        
+        .ball-badge svg { width: 30px; height: 30px; color: #fff; }
+        h1 { font-size: 23px; font-weight: 700; letter-spacing: 0.6px; color: var(--text); }
+        .subtitle { color: var(--green-deep); font-size: 12px; margin-top: 3px; letter-spacing: 0.4px; font-weight: 500; }
+
+        /* ===== 磨砂玻璃卡片 ===== */
         .card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            border: 1px solid var(--border);
+            background: var(--surface);
+            -webkit-backdrop-filter: blur(14px) saturate(1.15);
+            backdrop-filter: blur(14px) saturate(1.15);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: var(--radius);
+            padding: 22px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
         }
-        
-        .input-group {
-            margin-bottom: 16px;
+
+        .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .card-title {
+            display: flex; align-items: center; gap: 9px;
+            font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: 0.3px;
         }
-        
+        .card-title .ico { color: var(--gold); width: 17px; height: 17px; flex: none; }
+
+        .input-group { margin-bottom: 14px; }
+        .input-group:last-of-type { margin-bottom: 0; }
+
         label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--sub);
-            font-size: 14px;
-            font-weight: 500;
+            display: block; margin-bottom: 9px;
+            color: var(--muted); font-size: 12.5px; font-weight: 600; letter-spacing: 0.3px;
         }
-        
+
         input {
-            width: 100%;
-            padding: 16px;
-            background: #2a2a2a;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            color: var(--text);
-            font-size: 16px;
+            width: 100%; padding: 15px 16px;
+            background: var(--surface-solid);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            color: var(--text); font-size: 16px; font-variant-numeric: tabular-nums;
+            transition: border-color 0.2s, box-shadow 0.2s;
             -webkit-appearance: none;
         }
-        
-        input:focus {
-            outline: none;
-            border-color: var(--gold);
-        }
-        
+        input::placeholder { color: #aeb6b0; }
+        input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+
         .btn {
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            width: 100%; padding: 16px; border: none; border-radius: var(--radius-sm);
+            font-size: 16px; font-weight: 700; letter-spacing: 0.4px; cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s, filter 0.2s;
         }
-        
+        .btn:active { transform: scale(0.985); }
         .btn-primary {
-            background: linear-gradient(135deg, var(--gold), #e69500);
-            color: #000;
+            background: linear-gradient(135deg, var(--gold-2), var(--gold));
+            color: var(--gold-ink); box-shadow: 0 8px 20px rgba(194, 147, 43, 0.30);
         }
-        
-        .btn-primary:active {
-            transform: scale(0.98);
+        .btn-ghost {
+            background: rgba(255,255,255,0.7); color: var(--text-soft);
+            border: 1px solid var(--border-strong); font-weight: 600; margin-top: 11px;
         }
-        
-        .btn-secondary {
-            background: #333;
-            color: var(--text);
-            margin-top: 12px;
-        }
-        
+        .btn-ghost:active { background: #fff; }
         .btn-danger {
-            background: var(--red);
-            color: white;
-            margin-top: 12px;
+            background: var(--red-soft); color: var(--red);
+            border: 1px solid rgba(223, 80, 72, 0.20); font-weight: 600; margin-top: 11px;
         }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 20px 0;
+
+        .link-btn {
+            background: none; border: none; color: var(--green-deep);
+            font-size: 13px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer;
+            padding: 4px 2px; display: inline-flex; align-items: center; gap: 5px;
         }
-        
+        .link-btn .plus { width: 15px; height: 15px; }
+
+        /* 统计 */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
         .stat {
-            text-align: center;
-            padding: 16px;
-            background: #2a2a2a;
-            border-radius: 12px;
+            background: var(--surface-solid); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 16px 14px; text-align: left;
+            box-shadow: var(--shadow-sm);
         }
-        
         .stat-value {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 4px;
+            font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums;
+            letter-spacing: 0.3px; margin-bottom: 5px; color: var(--text);
         }
-        
-        .stat-label {
-            font-size: 12px;
-            color: var(--sub);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .positive { color: var(--green); }
+        .stat-label { font-size: 11.5px; color: var(--muted); letter-spacing: 0.4px; font-weight: 500; }
+        .positive { color: var(--green-deep); }
         .negative { color: var(--red); }
-        .neutral { color: var(--sub); }
-        
-        .progress {
-            margin: 20px 0;
-        }
-        
-        .progress-bar {
-            height: 12px;
-            background: #2a2a2a;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        
+        .neutral { color: var(--text); }
+
+        /* 目标进度（主） */
+        .goal-hero-name { font-size: 15px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+        .goal-hero-meta { font-size: 12.5px; color: var(--muted); margin-bottom: 16px; }
+        .progress { margin-top: 4px; }
+        .progress-bar { height: 10px; background: #e3ebf6; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
         .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--green), #00e676);
-            border-radius: 6px;
-            transition: width 0.3s;
+            height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-2));
+            border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1);
         }
-        
         .progress-text {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            margin-top: 8px;
-            color: var(--sub);
+            display: flex; justify-content: space-between; font-size: 13px;
+            margin-top: 9px; color: var(--text-soft); font-variant-numeric: tabular-nums; font-weight: 500;
         }
-        
+        .progress-text .pct { color: var(--gold); font-weight: 800; }
         .prediction {
-            background: rgba(245, 166, 35, 0.1);
-            padding: 16px;
-            border-radius: 12px;
-            margin-top: 20px;
-            text-align: center;
-            border: 1px solid rgba(245, 166, 35, 0.2);
+            background: var(--green-soft); padding: 14px 16px; border-radius: var(--radius-sm);
+            margin-top: 16px; display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid rgba(47, 111, 237, 0.20);
         }
-        
-        .prediction-title {
-            color: var(--gold);
-            font-size: 14px;
-            margin-bottom: 4px;
+        .prediction-title { color: var(--green-deep); font-size: 12.5px; letter-spacing: 0.3px; font-weight: 600; }
+        .prediction-date { color: var(--green-deep); font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .goal-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 14px 0 4px; line-height: 1.6; }
+
+        /* 目标清单 */
+        .goal-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .goal-item {
+            background: var(--surface-solid); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 13px 15px; cursor: pointer;
+            transition: border-color 0.2s, background 0.2s; box-shadow: var(--shadow-sm);
         }
-        
-        .prediction-date {
-            color: var(--gold);
-            font-size: 18px;
-            font-weight: 700;
+        .goal-item.active { border-color: rgba(194, 147, 43, 0.55); background: var(--gold-soft); }
+        .goal-item .gi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+        .goal-item .gi-name { font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 7px; }
+        .goal-item .gi-amount { font-size: 13px; color: var(--text-soft); font-variant-numeric: tabular-nums; font-weight: 600; }
+        .goal-item .gi-bar { height: 6px; background: #e3ebf6; border-radius: 99px; overflow: hidden; }
+        .goal-item .gi-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-2)); border-radius: 99px; transition: width 0.4s; }
+        .goal-item .gi-foot {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 8px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 500;
         }
-        
+        .goal-item .gi-del {
+            background: none; border: none; color: var(--muted); cursor: pointer;
+            padding: 2px; opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+        }
+        .goal-item .gi-del:hover { opacity: 1; color: var(--red); }
+        .badge-done {
+            font-size: 11px; font-weight: 800; color: var(--green-deep);
+            background: var(--green-soft); border: 1px solid rgba(47,111,237,0.28);
+            padding: 2px 8px; border-radius: 99px; letter-spacing: 0.4px;
+        }
+
+        /* 目标球员（首屏置顶，像球队名单） */
+        .player-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .player-card {
+            position: relative; background: var(--surface-solid);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 14px 6px 12px; text-align: center; transition: transform 0.15s, box-shadow 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+        .player-card:active { transform: scale(0.97); }
+        .player-avatar {
+            width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 10px;
+            object-fit: cover; background: #eef3f0;
+            border: 2.5px solid rgba(47, 111, 237, 0.5);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--green-deep); font-size: 24px; font-weight: 800; overflow: hidden;
+        }
+        .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .player-name {
+            font-size: 12px; font-weight: 700; color: var(--text-soft);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .player-del {
+            position: absolute; top: 5px; right: 5px; width: 20px; height: 20px;
+            border-radius: 50%; background: rgba(22, 32, 27, 0.62); border: none; color: #fff;
+            font-size: 13px; line-height: 1; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;
+        }
+        .player-card:hover .player-del, .player-card:active .player-del { opacity: 1; }
+        .player-empty {
+            grid-column: 1 / -1; text-align: center; color: var(--muted);
+            font-size: 12.5px; padding: 14px 0; line-height: 1.6;
+        }
+        .player-add {
+            background: rgba(255,255,255,0.55); border: 1.5px dashed rgba(47, 111, 237, 0.45);
+            border-radius: var(--radius-sm); padding: 14px 6px 12px; text-align: center;
+            cursor: pointer; color: var(--green-deep); transition: border-color 0.2s, background 0.2s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+        }
+        .player-add:active { border-color: var(--green-deep); background: rgba(47,111,237,0.08); }
+        .player-add .pa-ico {
+            width: 40px; height: 40px; border-radius: 50%; background: #fff;
+            border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center;
+            color: var(--green-deep);
+        }
+        .player-add .pa-ico svg { width: 20px; height: 20px; }
+        .player-add .pa-txt { font-size: 12px; font-weight: 700; }
+
+        /* 历史 */
         .history {
-            margin-top: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            padding: 0 12px;
+            max-height: 290px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 14px;
+            background: var(--surface-solid);
         }
-        
         .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 0;
-            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 15px; border-bottom: 1px solid var(--border);
         }
-        
-        .history-item:last-child {
-            border-bottom: none;
-        }
-        
-        .date {
-            color: var(--sub);
-            font-size: 14px;
-        }
-        
-        .amount {
-            font-weight: 600;
-            color: var(--text);
-        }
-        
+        .history-item:last-child { border-bottom: none; }
+        .history-item .date { color: var(--muted); font-size: 13px; }
+        .history-item .amount { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
         .change {
-            font-size: 12px;
-            padding: 2px 8px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
+            font-size: 11.5px; padding: 3px 8px; border-radius: 99px;
+            background: rgba(20, 24, 31, 0.06); font-weight: 600; font-variant-numeric: tabular-nums;
         }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--sub);
-        }
-        
-        .backup-section {
-            background: rgba(0, 200, 83, 0.1);
-            padding: 16px;
-            border-radius: 12px;
-            margin-top: 20px;
-            border: 1px solid rgba(0, 200, 83, 0.2);
-        }
-        
-        .backup-title {
-            color: var(--green);
-            font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        .backup-text {
-            font-size: 12px;
-            color: var(--sub);
-            line-height: 1.5;
-        }
-        
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--green);
-            color: #000;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        
-        .toast.show {
-            opacity: 1;
-        }
-        
-        .toast.error {
-            background: var(--red);
-            color: white;
-        }
-        
+        .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
+
         .earned-hint {
-            margin-top: 10px;
-            padding: 12px;
-            background: rgba(245, 166, 35, 0.12);
-            border-radius: 10px;
-            text-align: center;
-            font-size: 14px;
-            color: var(--text);
-            border: 1px solid rgba(245, 166, 35, 0.25);
+            margin-top: 12px; padding: 13px 15px; background: var(--gold-soft);
+            border-radius: var(--radius-sm); text-align: center; font-size: 13.5px; color: var(--text-soft);
+            border: 1px solid rgba(194, 147, 43, 0.22); font-weight: 500;
         }
-        
-        .earned-hint .earned-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--gold);
-        }
-        
-        .info {
-            font-size: 12px;
-            color: var(--sub);
-            text-align: center;
-            margin-top: 20px;
-            line-height: 1.5;
-        }
-        
+        .earned-hint .earned-value { font-size: 20px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+        .info { font-size: 12px; color: var(--green-deep); opacity: 0.8; text-align: center; margin-top: 16px; line-height: 1.7; letter-spacing: 0.2px; font-weight: 500; }
+
+        /* 弹窗 */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 999;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; inset: 0;
+            background: rgba(225, 238, 231, 0.55); backdrop-filter: blur(7px);
+            z-index: 999; align-items: center; justify-content: center; padding: 20px;
         }
-        
-        .modal-overlay.active {
-            display: flex;
-        }
-        
+        .modal-overlay.active { display: flex; }
         .modal {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 24px;
-            width: 90%;
-            max-width: 400px;
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.96);
+            -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 24px; padding: 24px; width: 100%; max-width: 390px;
+            box-shadow: 0 24px 70px rgba(20, 60, 40, 0.25);
+            animation: pop 0.22s cubic-bezier(.2,.9,.3,1.3);
         }
-        
+        @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(0.97);} to { opacity:1; transform:none; } }
         .modal h3 {
-            color: var(--gold);
-            margin-bottom: 16px;
-            font-size: 18px;
+            color: var(--text); margin-bottom: 18px; font-size: 17px; font-weight: 700;
+            display: flex; align-items: center; gap: 9px;
         }
-        
-        .modal input[type="date"] {
-            color-scheme: dark;
+        .modal h3 .ico { color: var(--gold); width: 18px; height: 18px; }
+        .modal input[type="date"] { color-scheme: light; }
+        .modal .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+        .modal .btn-row .btn { margin-top: 0; }
+        .current-record {
+            background: var(--surface-2); padding: 11px 13px; border-radius: var(--radius-sm);
+            margin-top: 10px; font-size: 13px; color: var(--text-soft); font-weight: 500;
         }
-        
-        .modal .btn-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
+
+        /* 球员上传预览 */
+        .upload-zone {
+            display: flex; align-items: center; gap: 14px;
+            background: var(--surface-2); border: 1px dashed var(--border-strong);
+            border-radius: var(--radius-sm); padding: 14px; margin-bottom: 14px;
+            cursor: pointer; transition: border-color 0.2s, background 0.2s;
         }
-        
-        .modal .btn-row .btn {
-            flex: 1;
-            margin-top: 0;
+        .upload-zone:active { border-color: var(--green); background: var(--green-soft); }
+        .upload-preview {
+            width: 64px; height: 64px; border-radius: 50%; flex: none;
+            background: #eef3f0; border: 2.5px solid rgba(47,111,237,0.5);
+            object-fit: cover; display: flex; align-items: center; justify-content: center;
+            color: var(--green-deep); font-size: 24px; font-weight: 800; overflow: hidden;
         }
-        
-        .modal .current-record {
-            background: #2a2a2a;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 8px;
-            font-size: 14px;
-            color: var(--sub);
+        .upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .upload-text { font-size: 13px; color: var(--text-soft); line-height: 1.5; font-weight: 500; }
+        .upload-text .sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+        .hidden-file { display: none; }
+
+        .toast {
+            position: fixed; top: 22px; left: 50%; transform: translateX(-50%) translateY(-12px);
+            background: var(--green-deep); color: #fff; padding: 12px 22px;
+            border-radius: 12px; font-weight: 700; font-size: 14px;
+            z-index: 1000; opacity: 0; transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none; box-shadow: 0 10px 30px rgba(31, 90, 209, 0.3);
         }
-        
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: var(--red); color: #fff; }
+
         @media (max-width: 480px) {
-            .container {
-                padding: 0 8px;
-            }
-            
-            .card {
-                padding: 16px;
-            }
+            .card { padding: 19px 16px; }
+            .player-grid { gap: 10px; }
+            .player-avatar { width: 58px; height: 58px; }
         }
     </style>
 </head>
 <body>
+    <div class="pitch-bg">
+        <svg class="bg-ball tl" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="4"/>
+            <path d="M50 30 L63 37 L59 51 L41 51 L37 37 Z" fill="currentColor"/>
+            <path d="M50 30 L50 12 M63 37 L78 32 M59 51 L67 65 M41 51 L33 65 M37 37 L22 32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <svg class="bg-ball br" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="4"/>
+            <path d="M50 30 L63 37 L59 51 L41 51 L37 37 Z" fill="currentColor"/>
+            <path d="M50 30 L50 12 M63 37 L78 32 M59 51 L67 65 M41 51 L33 65 M37 37 L22 32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+    </div>
+
     <div class="container">
         <header>
-            <h1>⚽ 实况金币打卡</h1>
-            <div class="subtitle">数据存手机本地，清缓存不丢失</div>
+            <div class="brand">
+                <div class="ball-badge">
+                    <svg viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="44" stroke="currentColor" stroke-width="5"/>
+                        <path d="M50 33 L61 40.5 L57 53 L43 53 L39 40.5 Z" fill="currentColor"/>
+                        <path d="M50 33 L50 16 M61 40.5 L75 35 M57 53 L66 67 M43 53 L34 67 M39 40.5 L25 35" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div style="text-align:left;">
+                    <h1>金币打卡</h1>
+                    <div class="subtitle">⚽ 目标球员 · 金币冲刺</div>
+                </div>
+            </div>
         </header>
 
+        <!-- 目标球员（首屏置顶） -->
         <div class="card">
-            <div class="input-group">
-                <label>今日金币总数</label>
-                <input type="number" id="todayGold" placeholder="输入金币总数" min="0" inputmode="numeric">
-                <div class="earned-hint" id="earnedHint" style="display:none;"></div>
+            <div class="card-head">
+                <div class="card-title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                    目标球员
+                </div>
+                <button class="link-btn" id="addPlayerBtn">
+                    <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    添加
+                </button>
             </div>
-            <div class="input-group">
-                <label>目标金币数量</label>
-                <input type="number" id="targetGold" placeholder="想要达到的目标" min="0" value="100000" inputmode="numeric">
+            <div class="player-grid" id="playerGrid"></div>
+            <div class="player-empty" id="playerEmpty">
+                还没有目标球员，点右上角「添加」<br>上传心仪球员的图片并命名
             </div>
-            <button class="btn btn-primary" id="saveBtn">保存今日记录</button>
-            <button class="btn btn-secondary" id="editBtn" style="margin-top:12px;">补录/修改历史记录</button>
         </div>
 
+        <!-- 今日打卡 -->
         <div class="card">
-            <h2>📊 今日统计</h2>
+            <div class="card-head">
+                <div class="card-title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+                    今日打卡
+                </div>
+            </div>
+            <div class="input-group">
+                <label>今日金币总数</label>
+                <input type="number" id="todayGold" placeholder="输入当前金币总数" min="0" inputmode="numeric">
+                <div class="earned-hint" id="earnedHint" style="display:none;"></div>
+            </div>
+            <button class="btn btn-primary" id="saveBtn">保存今日记录</button>
+            <button class="btn btn-ghost" id="editBtn">补录 / 修改历史</button>
+        </div>
+
+        <!-- 今日统计 -->
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+                    今日统计
+                </div>
+            </div>
             <div class="stats-grid">
                 <div class="stat">
                     <div class="stat-value" id="todayAmount">0</div>
@@ -427,52 +452,67 @@
             </div>
         </div>
 
+        <!-- 目标进度（主） -->
         <div class="card">
-            <h2>🎯 目标进度</h2>
-            <div class="progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div class="progress-text">
-                    <span id="currentProgress">0/0</span>
-                    <span id="progressPercent">0%</span>
+            <div class="card-head">
+                <div class="card-title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3"/></svg>
+                    目标进度
                 </div>
             </div>
-            <div class="prediction" id="predictionSection" style="display: none;">
-                <div class="prediction-title">预计完成日期</div>
-                <div class="prediction-date" id="predictionDate">--</div>
+            <div id="goalHero"></div>
+        </div>
+
+        <!-- 目标清单 -->
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+                    金币目标
+                </div>
+                <button class="link-btn" id="addGoalBtn">
+                    <svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    新增
+                </button>
+            </div>
+            <div class="goal-list" id="goalList"></div>
+            <div class="goal-empty" id="goalEmpty" style="display:none;">
+                还没有目标，点右上角「新增」<br>为你的金币设定一个名称与数量吧
             </div>
         </div>
 
+        <!-- 历史记录 -->
         <div class="card">
-            <h2>📅 历史记录</h2>
+            <div class="card-head">
+                <div class="card-title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    历史记录
+                </div>
+            </div>
             <div class="history" id="historyList">
-                <div class="empty-state">📝 暂无记录，开始打卡吧！</div>
+                <div class="empty-state">暂无记录，开始打卡吧</div>
             </div>
+            <button class="btn btn-ghost" id="exportBtn">导出数据备份</button>
+            <button class="btn btn-ghost" id="importBtn">导入备份文件</button>
             <button class="btn btn-danger" id="clearBtn">清空所有数据</button>
-            <button class="btn btn-secondary" id="exportBtn">导出数据备份</button>
-        </div>
-
-        <div class="backup-section">
-            <div class="backup-title">💾 数据安全说明</div>
-            <div class="backup-text">
-                数据存储在手机本地 IndexedDB 中，不会因清缓存丢失。<br>
-                如需更换设备，请先导出备份文件。<br>
-                建议每周截图保存进度。
-            </div>
+            <input type="file" id="importFile" class="hidden-file" accept="application/json">
         </div>
 
         <div class="info">
-            添加到主屏幕：在 Safari 中打开 → 分享 → 添加到主屏幕<br>
-            数据存储在 IndexedDB 中，清缓存不会丢失
+            添加到主屏幕：Safari 打开 → 分享 → 添加到主屏幕<br>
+            数据存于 IndexedDB，清缓存不会丢失 · 换设备请先导出
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <!-- 补录/修改 弹窗 -->
     <div class="modal-overlay" id="editModal">
         <div class="modal">
-            <h3>补录/修改记录</h3>
+            <h3>
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                补录 / 修改记录
+            </h3>
             <div class="input-group">
                 <label>选择日期</label>
                 <input type="date" id="editDate">
@@ -483,428 +523,529 @@
             </div>
             <div class="current-record" id="editCurrent" style="display:none;"></div>
             <div class="btn-row">
-                <button class="btn btn-secondary" id="editCancel">取消</button>
+                <button class="btn btn-ghost" id="editCancel">取消</button>
                 <button class="btn btn-primary" id="editSave">保存</button>
             </div>
         </div>
     </div>
 
+    <!-- 新增目标 弹窗 -->
+    <div class="modal-overlay" id="goalModal">
+        <div class="modal">
+            <h3>
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                新增金币目标
+            </h3>
+            <div class="input-group">
+                <label>目标名称</label>
+                <input type="text" id="goalName" placeholder="例如：签下梅西、买传奇包">
+            </div>
+            <div class="input-group">
+                <label>目标金币数量</label>
+                <input type="number" id="goalAmount" placeholder="想要达到的金币数" min="0" inputmode="numeric">
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-ghost" id="goalCancel">取消</button>
+                <button class="btn btn-primary" id="goalSave">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加球员 弹窗 -->
+    <div class="modal-overlay" id="playerModal">
+        <div class="modal">
+            <h3>
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                添加目标球员
+            </h3>
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-preview" id="uploadPreview">⚽</div>
+                <div class="upload-text">
+                    点击上传球员图片
+                    <div class="sub">支持相册或拍照，可留空用首字代替</div>
+                </div>
+            </div>
+            <input type="file" id="playerFile" class="hidden-file" accept="image/*">
+            <div class="input-group">
+                <label>球员名称</label>
+                <input type="text" id="playerName" placeholder="例如：Mbappé、C罗">
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-ghost" id="playerCancel">取消</button>
+                <button class="btn btn-primary" id="playerSave">添加</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 使用 IndexedDB 存储数据（比 localStorage 更可靠）
         const DB_NAME = 'GoldTrackerDB';
         const DB_VERSION = 1;
         const STORE_NAME = 'goldData';
-        
+
         let db = null;
-        let goldData = { history: [], target: 100000 };
-        
-        // 初始化数据库
+        let goldData = { history: [], goals: [], players: [], activeGoalId: null };
+
+        function uid() {
+            return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        }
+
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
-                
                 request.onerror = () => reject(request.error);
-                
                 request.onsuccess = () => {
                     db = request.result;
                     loadData().then(resolve);
                 };
-                
                 request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME);
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME);
                     }
                 };
             });
         }
-        
-        // 加载数据
+
         function loadData() {
             return new Promise((resolve) => {
-                if (!db) {
-                    resolve(goldData);
-                    return;
-                }
-                
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
+                if (!db) { resolve(goldData); return; }
+                const tx = db.transaction([STORE_NAME], 'readonly');
+                const store = tx.objectStore(STORE_NAME);
                 const request = store.get('main');
-                
                 request.onsuccess = () => {
                     if (request.result) {
-                        goldData = request.result;
+                        const d = request.result;
+                        goldData.history = Array.isArray(d.history) ? d.history : [];
+                        goldData.goals = Array.isArray(d.goals) ? d.goals : [];
+                        goldData.players = Array.isArray(d.players) ? d.players : [];
+                        goldData.activeGoalId = d.activeGoalId || null;
+                        if (d.target !== undefined && d.target !== null && goldData.goals.length === 0) {
+                            goldData.goals.push({ id: uid(), name: '金币目标', amount: Number(d.target) || 0 });
+                        }
                     }
                     resolve(goldData);
                 };
-                
-                request.onerror = () => {
-                    console.warn('加载数据失败，使用默认数据');
-                    resolve(goldData);
-                };
+                request.onerror = () => { console.warn('加载失败，使用默认'); resolve(goldData); };
             });
         }
-        
-        // 保存数据
+
         function saveData() {
             return new Promise((resolve) => {
-                if (!db) {
-                    resolve(false);
-                    return;
-                }
-                
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
+                if (!db) { resolve(false); return; }
+                const tx = db.transaction([STORE_NAME], 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
                 const request = store.put(goldData, 'main');
-                
                 request.onsuccess = () => resolve(true);
                 request.onerror = () => resolve(false);
             });
         }
-        
-        // 显示提示
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast' + (isError ? ' error' : '');
-            setTimeout(() => toast.classList.add('show'), 10);
+            requestAnimationFrame(() => toast.classList.add('show'));
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
-        
-        // 渲染界面
+
+        const todayStr = () => new Date().toISOString().split('T')[0];
+        const fmt = (n) => Number(n || 0).toLocaleString('en-US');
+        function latestTotal() {
+            return goldData.history.length ? goldData.history[goldData.history.length - 1].amount : 0;
+        }
+
         async function render() {
             await loadData();
             const history = goldData.history;
-            const today = new Date().toISOString().split('T')[0];
-            
-            // 今日记录
+
+            const today = todayStr();
             const todayRecord = history.find(r => r.date === today);
-            document.getElementById('todayAmount').textContent = todayRecord ? todayRecord.amount.toLocaleString() : '0';
-            
-            // 昨日记录
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayDate = yesterday.toISOString().split('T')[0];
-            const yesterdayRecord = history.find(r => r.date === yesterdayDate);
-            document.getElementById('yesterdayAmount').textContent = yesterdayRecord ? yesterdayRecord.amount.toLocaleString() : '0';
-            
-            // 今日获得
-            if (todayRecord && yesterdayRecord) {
-                const earned = todayRecord.amount - yesterdayRecord.amount;
-                const sign = earned >= 0 ? '+' : '';
-                document.getElementById('todayEarned').textContent = sign + earned.toLocaleString();
-                document.getElementById('todayEarned').className = 'stat-value ' + (earned >= 0 ? 'positive' : 'negative');
-                
-                // 增长率
-                const growthRate = yesterdayRecord.amount > 0 ? 
-                    ((earned / yesterdayRecord.amount) * 100).toFixed(1) : '∞';
-                document.getElementById('growthRate').textContent = growthRate + '%';
-                document.getElementById('growthRate').className = 'stat-value ' + (parseFloat(growthRate) >= 0 ? 'positive' : 'negative');
+            document.getElementById('todayAmount').textContent = todayRecord ? fmt(todayRecord.amount) : '0';
+
+            const y = new Date(); y.setDate(y.getDate() - 1);
+            const yStr = y.toISOString().split('T')[0];
+            const yRecord = history.find(r => r.date === yStr);
+            document.getElementById('yesterdayAmount').textContent = yRecord ? fmt(yRecord.amount) : '0';
+
+            const earnedEl = document.getElementById('todayEarned');
+            const growthEl = document.getElementById('growthRate');
+            if (todayRecord && yRecord) {
+                const earned = todayRecord.amount - yRecord.amount;
+                earnedEl.textContent = (earned >= 0 ? '+' : '') + fmt(earned);
+                earnedEl.className = 'stat-value ' + (earned >= 0 ? 'positive' : 'negative');
+                const rate = yRecord.amount > 0 ? ((earned / yRecord.amount) * 100).toFixed(1) : '∞';
+                growthEl.textContent = rate + '%';
+                growthEl.className = 'stat-value ' + (parseFloat(rate) >= 0 ? 'positive' : 'negative');
             } else {
-                document.getElementById('todayEarned').textContent = '+0';
-                document.getElementById('todayEarned').className = 'stat-value neutral';
-                document.getElementById('growthRate').textContent = '0%';
-                document.getElementById('growthRate').className = 'stat-value neutral';
+                earnedEl.textContent = '+0'; earnedEl.className = 'stat-value neutral';
+                growthEl.textContent = '0%'; growthEl.className = 'stat-value neutral';
             }
-            
-            // 目标进度（最后一天的金币总数）
-            const lastRecord = history.length > 0 ? history[history.length - 1].amount : 0;
-            const target = goldData.target;
-            const progressPercent = target > 0 ? Math.min((lastRecord / target) * 100, 100) : 0;
-            
-            document.getElementById('progressFill').style.width = progressPercent + '%';
-            document.getElementById('currentProgress').textContent = lastRecord.toLocaleString() + '/' + target.toLocaleString();
-            document.getElementById('progressPercent').textContent = progressPercent.toFixed(1) + '%';
-            
-            // 预计完成日期（基于历史每日获得计算）
-            if (history.length >= 2) {
-                const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
-                let totalEarned = 0;
-                let earnedDays = 0;
-                
-                for (let i = 1; i < sortedHistory.length; i++) {
-                    const dayDiff = (new Date(sortedHistory[i].date) - new Date(sortedHistory[i-1].date)) / (1000 * 60 * 60 * 24);
-                    if (dayDiff <= 7) {
-                        const earned = sortedHistory[i].amount - sortedHistory[i-1].amount;
-                        if (earned > 0) {
-                            totalEarned += earned;
-                            earnedDays++;
-                        }
-                    }
-                }
-                
-                const avgDailyEarned = earnedDays > 0 ? totalEarned / earnedDays : 0;
-                if (avgDailyEarned > 0 && lastRecord < target) {
-                    const daysRemaining = Math.ceil((target - lastRecord) / avgDailyEarned);
-                    const completionDate = new Date();
-                    completionDate.setDate(completionDate.getDate() + daysRemaining);
-                    
-                    document.getElementById('predictionSection').style.display = 'block';
-                    document.getElementById('predictionDate').textContent = completionDate.toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                } else {
-                    document.getElementById('predictionSection').style.display = 'none';
-                }
-            } else {
-                document.getElementById('predictionSection').style.display = 'none';
-            }
-            
-            // 历史记录
-            const historyList = document.getElementById('historyList');
-            if (history.length === 0) {
-                historyList.innerHTML = '<div class="empty-state">📝 暂无记录，开始打卡吧！</div>';
-            } else {
-                const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
-                historyList.innerHTML = sortedHistory.map((record, index) => {
-                    const date = new Date(record.date);
-                    const dateStr = date.toLocaleDateString('zh-CN', {
-                        month: 'short',
-                        day: 'numeric',
-                        weekday: 'short'
-                    });
-                    
-                    let changeHtml = '';
-                    if (index < sortedHistory.length - 1) {
-                        const change = record.amount - sortedHistory[index + 1].amount;
-                        const changeClass = change >= 0 ? 'positive' : 'negative';
-                        const changeSymbol = change >= 0 ? '+' : '';
-                        changeHtml = `<span class="change ${changeClass}">${changeSymbol}${change}</span>`;
-                    }
-                    
-                    return `
-                        <div class="history-item">
-                            <div class="date">${dateStr}</div>
-                            <div class="amount">${record.amount.toLocaleString()} 金币</div>
-                            ${changeHtml}
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            // 目标输入框
-            document.getElementById('targetGold').value = target;
+
+            renderPlayers();
+            renderGoals();
+            renderHistory();
         }
-        
-        // 保存按钮点击
-        document.getElementById('saveBtn').onclick = async function() {
-            const todayGold = parseInt(document.getElementById('todayGold').value);
-            const targetGold = parseInt(document.getElementById('targetGold').value);
-            
-            if (isNaN(todayGold) || todayGold < 0) {
-                showToast('请输入有效的金币数量', true);
+
+        function activeGoal() {
+            if (goldData.activeGoalId) {
+                const g = goldData.goals.find(x => x.id === goldData.activeGoalId);
+                if (g) return g;
+            }
+            const total = latestTotal();
+            const unachieved = goldData.goals.filter(g => g.amount > total).sort((a, b) => a.amount - b.amount);
+            if (unachieved.length) return unachieved[0];
+            return goldData.goals.slice().sort((a, b) => b.amount - a.amount)[0] || null;
+        }
+
+        function renderGoals() {
+            const list = document.getElementById('goalList');
+            const empty = document.getElementById('goalEmpty');
+            const hero = document.getElementById('goalHero');
+            const total = latestTotal();
+
+            if (goldData.goals.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                hero.innerHTML = '<div class="goal-empty">还没有设定目标，先去右上角「新增」一个吧</div>';
                 return;
             }
-            
-            if (isNaN(targetGold) || targetGold <= 0) {
-                showToast('请输入有效的目标数量', true);
-                return;
-            }
-            
-            await loadData();
-            const today = new Date().toISOString().split('T')[0];
-            
-            // 更新或添加今日记录
-            const existingIndex = goldData.history.findIndex(r => r.date === today);
-            if (existingIndex !== -1) {
-                goldData.history[existingIndex].amount = todayGold;
+            empty.style.display = 'none';
+
+            const active = activeGoal();
+            list.innerHTML = goldData.goals.map(g => {
+                const pct = g.amount > 0 ? Math.min((total / g.amount) * 100, 100) : 0;
+                const done = total >= g.amount;
+                const isActive = active && g.id === active.id;
+                return `
+                    <div class="goal-item ${isActive ? 'active' : ''}" data-id="${g.id}">
+                        <div class="gi-top">
+                            <div class="gi-name">
+                                ${done ? '<span class="badge-done">已达成</span>' : ''}${escapeHtml(g.name)}
+                            </div>
+                            <button class="gi-del" data-del="${g.id}" title="删除">✕</button>
+                        </div>
+                        <div class="gi-bar"><div class="gi-fill" style="width:${pct}%"></div></div>
+                        <div class="gi-foot">
+                            <span>${fmt(total)} / ${fmt(g.amount)}</span>
+                            <span>${pct.toFixed(0)}%</span>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            const pct = active.amount > 0 ? Math.min((total / active.amount) * 100, 100) : 0;
+            const done = total >= active.amount;
+            let predictionHtml = '';
+            if (!done) {
+                const pred = predictDate(active.amount, total);
+                if (pred) {
+                    predictionHtml = `
+                        <div class="prediction">
+                            <div class="prediction-title">预计达成「${escapeHtml(active.name)}」</div>
+                            <div class="prediction-date">${pred}</div>
+                        </div>`;
+                }
             } else {
-                goldData.history.push({ date: today, amount: todayGold });
+                predictionHtml = `
+                    <div class="prediction">
+                        <div class="prediction-title">「${escapeHtml(active.name)}」已达成 🎉</div>
+                        <div class="prediction-date">继续冲下一个</div>
+                    </div>`;
             }
-            
-            // 更新目标
-            goldData.target = targetGold;
-            
-            // 保存数据
+            hero.innerHTML = `
+                <div class="goal-hero-name">${escapeHtml(active.name)}</div>
+                <div class="goal-hero-meta">当前 ${fmt(total)} / 目标 ${fmt(active.amount)} 金币</div>
+                <div class="progress">
+                    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+                    <div class="progress-text">
+                        <span>进度</span>
+                        <span class="pct">${pct.toFixed(1)}%</span>
+                    </div>
+                </div>
+                ${predictionHtml}`;
+
+            list.querySelectorAll('.goal-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('.gi-del')) return;
+                    goldData.activeGoalId = el.dataset.id;
+                    saveData().then(render);
+                });
+            });
+            list.querySelectorAll('.gi-del').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.del;
+                    const g = goldData.goals.find(x => x.id === id);
+                    if (confirm(`确定删除目标「${g ? g.name : ''}」吗？`)) {
+                        goldData.goals = goldData.goals.filter(x => x.id !== id);
+                        if (goldData.activeGoalId === id) goldData.activeGoalId = null;
+                        saveData().then(render);
+                    }
+                });
+            });
+        }
+
+        function predictDate(targetAmount, total) {
+            const history = goldData.history;
+            if (history.length < 2 || targetAmount <= total) return null;
+            const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let totalEarned = 0, days = 0;
+            for (let i = 1; i < sorted.length; i++) {
+                const diff = (new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / 86400000;
+                if (diff <= 7) {
+                    const e = sorted[i].amount - sorted[i - 1].amount;
+                    if (e > 0) { totalEarned += e; days++; }
+                }
+            }
+            const avg = days > 0 ? totalEarned / days : 0;
+            if (avg <= 0) return null;
+            const remain = Math.ceil((targetAmount - total) / avg);
+            const d = new Date(); d.setDate(d.getDate() + remain);
+            return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function renderPlayers() {
+            const grid = document.getElementById('playerGrid');
+            const empty = document.getElementById('playerEmpty');
+            if (goldData.players.length === 0) {
+                grid.innerHTML = `
+                    <div class="player-add" id="playerAddTile">
+                        <div class="pa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                        <div class="pa-txt">添加球员</div>
+                    </div>`;
+                document.getElementById('playerAddTile').onclick = () => document.getElementById('addPlayerBtn').click();
+                empty.style.display = 'none';
+                return;
+            }
+            empty.style.display = 'none';
+            let html = goldData.players.map(p => {
+                const avatar = p.img
+                    ? `<div class="player-avatar"><img src="${p.img}" alt=""></div>`
+                    : `<div class="player-avatar">${(p.name || '?').trim().charAt(0).toUpperCase()}</div>`;
+                return `
+                    <div class="player-card" data-id="${p.id}">
+                        <button class="player-del" data-del="${p.id}" title="移除">✕</button>
+                        ${avatar}
+                        <div class="player-name">${escapeHtml(p.name || '未命名')}</div>
+                    </div>`;
+            }).join('');
+            html += `
+                <div class="player-add" id="playerAddTile">
+                    <div class="pa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                    <div class="pa-txt">添加球员</div>
+                </div>`;
+            grid.innerHTML = html;
+            document.getElementById('playerAddTile').onclick = () => document.getElementById('addPlayerBtn').click();
+
+            grid.querySelectorAll('.player-del').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.del;
+                    const p = goldData.players.find(x => x.id === id);
+                    if (confirm(`移除球员「${p ? p.name : ''}」？`)) {
+                        goldData.players = goldData.players.filter(x => x.id !== id);
+                        saveData().then(render);
+                    }
+                });
+            });
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            const history = goldData.history;
+            if (history.length === 0) {
+                list.innerHTML = '<div class="empty-state">暂无记录，开始打卡吧</div>';
+                return;
+            }
+            const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+            list.innerHTML = sorted.map((r, i) => {
+                const d = new Date(r.date);
+                const dateStr = d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' });
+                let changeHtml = '';
+                if (i < sorted.length - 1) {
+                    const ch = r.amount - sorted[i + 1].amount;
+                    const cls = ch >= 0 ? 'positive' : 'negative';
+                    changeHtml = `<span class="change ${cls}">${ch >= 0 ? '+' : ''}${fmt(ch)}</span>`;
+                }
+                return `
+                    <div class="history-item">
+                        <span class="date">${dateStr}</span>
+                        <span class="amount">${fmt(r.amount)} 金币</span>
+                        ${changeHtml}
+                    </div>`;
+            }).join('');
+        }
+
+        function escapeHtml(s) {
+            return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        document.getElementById('saveBtn').onclick = async function () {
+            const val = parseInt(document.getElementById('todayGold').value, 10);
+            if (isNaN(val) || val < 0) { showToast('请输入有效的金币数量', true); return; }
+            await loadData();
+            const today = todayStr();
+            const idx = goldData.history.findIndex(r => r.date === today);
+            if (idx !== -1) goldData.history[idx].amount = val;
+            else goldData.history.push({ date: today, amount: val });
+            goldData.history.sort((a, b) => new Date(a.date) - new Date(b.date));
             if (await saveData()) {
-                showToast('✅ 保存成功！');
+                showToast('保存成功');
                 render();
                 document.getElementById('todayGold').value = '';
-            } else {
-                showToast('保存失败，请重试', true);
-            }
+                document.getElementById('earnedHint').style.display = 'none';
+            } else showToast('保存失败，请重试', true);
         };
-        
-        // 清空按钮
-        document.getElementById('clearBtn').onclick = async function() {
-            if (confirm('⚠️ 确定要清空所有数据吗？此操作不可撤销！')) {
-                goldData = { history: [], target: 100000 };
-                if (await saveData()) {
-                    showToast('数据已清空');
-                    render();
-                } else {
-                    showToast('清空失败', true);
-                }
-            }
-        };
-        
-        // 导出按钮
-        document.getElementById('exportBtn').onclick = async function() {
+
+        document.getElementById('todayGold').addEventListener('input', async function () {
+            const total = parseInt(this.value, 10);
+            const hint = document.getElementById('earnedHint');
+            if (isNaN(total) || total < 0) { hint.style.display = 'none'; return; }
             await loadData();
-            const dataStr = JSON.stringify(goldData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
+            const y = new Date(); y.setDate(y.getDate() - 1);
+            const yRec = goldData.history.find(r => r.date === y.toISOString().split('T')[0]);
+            hint.style.display = 'block';
+            if (yRec) {
+                const e = total - yRec.amount;
+                hint.innerHTML = `今天获得了 <span class="earned-value">${e >= 0 ? '+' : ''}${fmt(e)}</span> 金币`;
+            } else {
+                hint.innerHTML = `暂无昨日数据，这是你的首次记录`;
+            }
+        });
+        document.getElementById('todayGold').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('saveBtn').click(); });
+
+        document.getElementById('clearBtn').onclick = async function () {
+            if (confirm('确定清空所有数据吗？此操作不可撤销！')) {
+                goldData = { history: [], goals: [], players: [], activeGoalId: null };
+                if (await saveData()) { showToast('数据已清空'); render(); }
+                else showToast('清空失败', true);
+            }
+        };
+
+        document.getElementById('exportBtn').onclick = async function () {
+            await loadData();
+            const blob = new Blob([JSON.stringify(goldData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = '金币打卡数据备份.json';
-            a.click();
+            a.href = url; a.download = '金币打卡数据备份.json'; a.click();
             URL.revokeObjectURL(url);
-            showToast('备份文件已导出');
+            showToast('备份已导出');
         };
-        
-        // 目标输入框实时保存
-        document.getElementById('targetGold').addEventListener('change', async function() {
-            const targetGold = parseInt(this.value);
-            if (!isNaN(targetGold) && targetGold > 0) {
-                await loadData();
-                goldData.target = targetGold;
-                await saveData();
-                render();
-                showToast('目标已更新');
+
+        document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+        document.getElementById('importFile').addEventListener('change', async function () {
+            const file = this.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const d = JSON.parse(text);
+                goldData = {
+                    history: Array.isArray(d.history) ? d.history : [],
+                    goals: Array.isArray(d.goals) ? d.goals : [],
+                    players: Array.isArray(d.players) ? d.players : [],
+                    activeGoalId: d.activeGoalId || null
+                };
+                if (await saveData()) { showToast('导入成功'); render(); }
+            } catch (err) {
+                showToast('文件格式错误', true);
             }
+            this.value = '';
         });
-        
-        // 输入总数时自动计算今天获得了多少
-        document.getElementById('todayGold').addEventListener('input', async function() {
-            const total = parseInt(this.value);
-            const earnedHint = document.getElementById('earnedHint');
-            
-            if (isNaN(total) || total < 0) {
-                earnedHint.style.display = 'none';
-                return;
-            }
-            
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+        });
+
+        document.getElementById('editBtn').onclick = function () {
+            document.getElementById('editDate').value = todayStr();
+            document.getElementById('editAmount').value = '';
+            document.getElementById('editCurrent').style.display = 'none';
+            openModal('editModal');
+        };
+        document.getElementById('editCancel').onclick = () => closeModal('editModal');
+        document.getElementById('editDate').addEventListener('change', async function () {
+            const date = this.value;
+            const cur = document.getElementById('editCurrent');
+            if (!date) { cur.style.display = 'none'; return; }
             await loadData();
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayDate = yesterday.toISOString().split('T')[0];
-            const yesterdayRecord = goldData.history.find(r => r.date === yesterdayDate);
-            
-            if (yesterdayRecord) {
-                const earned = total - yesterdayRecord.amount;
-                const sign = earned >= 0 ? '+' : '';
-                earnedHint.style.display = 'block';
-                earnedHint.innerHTML = `今天获得了 <span class="earned-value">${sign}${earned.toLocaleString()}</span> 金币`;
-            } else {
-                earnedHint.style.display = 'block';
-                earnedHint.innerHTML = '暂无昨日数据，这是你的首次记录';
-            }
+            const rec = goldData.history.find(r => r.date === date);
+            if (rec) { cur.style.display = 'block'; cur.textContent = `该日已有记录：${fmt(rec.amount)} 金币`; }
+            else cur.style.display = 'none';
         });
-        
-        // 键盘快捷键
-        document.getElementById('todayGold').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('saveBtn').click();
-            }
+        document.getElementById('editSave').onclick = async function () {
+            const date = document.getElementById('editDate').value;
+            const amount = parseInt(document.getElementById('editAmount').value, 10);
+            if (!date) { showToast('请选择日期', true); return; }
+            if (isNaN(amount) || amount < 0) { showToast('请输入有效的金币数量', true); return; }
+            await loadData();
+            const idx = goldData.history.findIndex(r => r.date === date);
+            if (idx !== -1) { goldData.history[idx].amount = amount; showToast(`已修改 ${date}`); }
+            else { goldData.history.push({ date, amount }); showToast(`已添加 ${date}`); }
+            goldData.history.sort((a, b) => new Date(a.date) - new Date(b.date));
+            if (await saveData()) { render(); closeModal('editModal'); }
+            else showToast('保存失败', true);
+        };
+
+        document.getElementById('addGoalBtn').onclick = function () {
+            document.getElementById('goalName').value = '';
+            document.getElementById('goalAmount').value = '';
+            openModal('goalModal');
+            setTimeout(() => document.getElementById('goalName').focus(), 50);
+        };
+        document.getElementById('goalCancel').onclick = () => closeModal('goalModal');
+        document.getElementById('goalSave').onclick = async function () {
+            const name = document.getElementById('goalName').value.trim();
+            const amount = parseInt(document.getElementById('goalAmount').value, 10);
+            if (!name) { showToast('请输入目标名称', true); return; }
+            if (isNaN(amount) || amount <= 0) { showToast('请输入有效的金币数量', true); return; }
+            await loadData();
+            goldData.goals.push({ id: uid(), name, amount });
+            if (!goldData.activeGoalId) goldData.activeGoalId = goldData.goals[goldData.goals.length - 1].id;
+            if (await saveData()) { showToast('目标已添加'); render(); closeModal('goalModal'); }
+            else showToast('保存失败', true);
+        };
+
+        let pendingPlayerImg = null;
+        document.getElementById('addPlayerBtn').onclick = function () {
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerFile').value = '';
+            pendingPlayerImg = null;
+            document.getElementById('uploadPreview').innerHTML = '⚽';
+            openModal('playerModal');
+            setTimeout(() => document.getElementById('playerName').focus(), 50);
+        };
+        document.getElementById('playerCancel').onclick = () => closeModal('playerModal');
+        document.getElementById('uploadZone').onclick = () => document.getElementById('playerFile').click();
+        document.getElementById('playerFile').addEventListener('change', function () {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pendingPlayerImg = e.target.result;
+                document.getElementById('uploadPreview').innerHTML = `<img src="${pendingPlayerImg}" alt="">`;
+            };
+            reader.readAsDataURL(file);
         });
-        
-        document.getElementById('targetGold').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('saveBtn').click();
-            }
-        });
-        
-        // 页面加载时初始化并绑定事件
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.getElementById('playerSave').onclick = async function () {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) { showToast('请输入球员名称', true); return; }
+            await loadData();
+            goldData.players.push({ id: uid(), name, img: pendingPlayerImg });
+            if (await saveData()) { showToast('球员已添加'); render(); closeModal('playerModal'); }
+            else showToast('保存失败', true);
+        };
+
+        document.addEventListener('DOMContentLoaded', async function () {
             try {
                 await initDB();
                 await render();
-                console.log('应用初始化完成');
-                
-                // 绑定补录/修改按钮事件
-                document.getElementById('editBtn').onclick = async function() {
-                    await loadData();
-                    const today = new Date().toISOString().split('T')[0];
-                    document.getElementById('editDate').value = today;
-                    document.getElementById('editAmount').value = '';
-                    document.getElementById('editCurrent').style.display = 'none';
-                    document.getElementById('editModal').classList.add('active');
-                };
-                
-                document.getElementById('editCancel').onclick = function() {
-                    document.getElementById('editModal').classList.remove('active');
-                };
-                
-                // 日期变化时显示已有记录
-                document.getElementById('editDate').addEventListener('change', async function() {
-                    const date = this.value;
-                    const currentEl = document.getElementById('editCurrent');
-                    
-                    if (!date) {
-                        currentEl.style.display = 'none';
-                        return;
-                    }
-                    
-                    await loadData();
-                    const existing = goldData.history.find(r => r.date === date);
-                    
-                    if (existing) {
-                        currentEl.style.display = 'block';
-                        currentEl.textContent = `该日已有记录：${existing.amount.toLocaleString()} 金币`;
-                    } else {
-                        currentEl.style.display = 'none';
-                    }
-                });
-                
-                // 保存修改
-                document.getElementById('editSave').onclick = async function() {
-                    const date = document.getElementById('editDate').value;
-                    const amount = parseInt(document.getElementById('editAmount').value);
-                    
-                    if (!date) {
-                        showToast('请选择日期', true);
-                        return;
-                    }
-                    
-                    if (isNaN(amount) || amount < 0) {
-                        showToast('请输入有效的金币数量', true);
-                        return;
-                    }
-                    
-                    await loadData();
-                    const existingIndex = goldData.history.findIndex(r => r.date === date);
-                    
-                    if (existingIndex !== -1) {
-                        // 修改已有记录
-                        goldData.history[existingIndex].amount = amount;
-                        showToast(`已修改 ${date} 的记录为 ${amount.toLocaleString()} 金币`);
-                    } else {
-                        // 新增记录
-                        goldData.history.push({ date, amount });
-                        showToast(`已添加 ${date} 的记录：${amount.toLocaleString()} 金币`);
-                    }
-                    
-                    // 按日期排序（确保顺序）
-                    goldData.history.sort((a, b) => new Date(a.date) - new Date(b.date));
-                    
-                    if (await saveData()) {
-                        render();
-                        document.getElementById('editModal').classList.remove('active');
-                    } else {
-                        showToast('保存失败', true);
-                    }
-                };
-                
-                // 关闭模态框点击背景
-                document.getElementById('editModal').onclick = function(e) {
-                    if (e.target === this) {
-                        this.classList.remove('active');
-                    }
-                };
-                
-            } catch (error) {
-                console.error('初始化失败:', error);
+            } catch (err) {
+                console.error('初始化失败:', err);
                 showToast('初始化失败，使用本地存储', true);
                 await render();
             }
         });
-        
-
-        
-        // 允许页面正常滚动
-        // 移除 touchmove 阻止默认行为的代码
     </script>
 </body>
 </html>
