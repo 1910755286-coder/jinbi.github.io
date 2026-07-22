@@ -230,18 +230,41 @@
         .player-grid::-webkit-scrollbar { display: none; }
         .player-card {
             position: relative; background: var(--surface); flex: 0 0 auto;
-            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            border: 1.5px solid var(--blue); border-radius: var(--radius-sm);
             overflow: hidden; box-shadow: var(--shadow-sm);
             width: clamp(118px, 42%, 168px);
-            scroll-snap-align: start; touch-action: pan-x;
+            scroll-snap-align: start;
             user-select: none; -webkit-user-select: none;
-            transition: transform 0.15s, box-shadow 0.2s; cursor: grab;
+            transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s, border-color 0.2s;
         }
         .player-card:active { transform: scale(0.97); box-shadow: var(--shadow); }
         .player-card.dragging {
             transition: none; z-index: 5; box-shadow: var(--shadow);
-            cursor: grabbing; opacity: 0.96;
+            cursor: grabbing; opacity: 1 !important;
         }
+        .player-card.final {
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 0 3px var(--gold-soft), var(--shadow);
+            opacity: 1;
+        }
+        .player-card.dim { opacity: 0.8; }
+        .player-grip {
+            position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 3;
+            width: 30px; height: 16px; border-radius: 8px;
+            background: rgba(255,255,255,0.78); color: var(--muted);
+            display: flex; align-items: center; justify-content: center; cursor: grab;
+            touch-action: none; box-shadow: 0 1px 3px rgba(20,50,90,0.15);
+        }
+        .player-grip svg { width: 18px; height: 18px; }
+        .player-grip:active { cursor: grabbing; background: #fff; }
+        .player-crown {
+            position: absolute; top: 6px; left: 6px; width: 22px; height: 22px; z-index: 3;
+            border: none; border-radius: 50%; background: rgba(22, 32, 27, 0.45); color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.7;
+        }
+        .player-crown svg { width: 13px; height: 13px; }
+        .player-crown.active { background: var(--gold); opacity: 1; box-shadow: 0 0 0 2px var(--gold-soft); }
+        .player-crown:active { transform: scale(0.92); }
         .player-photo {
             width: 100%; aspect-ratio: 3 / 4; object-fit: contain; display: block;
             background: var(--surface-3);
@@ -805,6 +828,8 @@
         }
 
         function renderPlayers() {
+            const CROWN_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.2 3.1L12 4l4.8 7.1L21 8l-1.6 11H4.6L3 8z"/></svg>';
+            const GRIP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
             const grid = document.getElementById('playerGrid');
             const empty = document.getElementById('playerEmpty');
             if (goldData.players.length === 0) {
@@ -813,13 +838,17 @@
                 return;
             }
             empty.style.display = 'none';
+            const hasFinal = goldData.players.some(p => p.final);
             const html = goldData.players.map(p => {
                 const face = p.img
                     ? `<img class="player-photo" src="${p.img}" alt="${escapeHtml(p.name || '')}">`
                     : `<div class="player-initial">${(p.name || '?').trim().charAt(0).toUpperCase()}</div>`;
+                const cls = p.final ? ' final' : (hasFinal ? ' dim' : '');
                 return `
-                    <div class="player-card" data-id="${p.id}">
+                    <div class="player-card${cls}" data-id="${p.id}">
+                        <button class="player-crown${p.final ? ' active' : ''}" data-crown="${p.id}" title="${p.final ? '取消最终目标' : '设为最终目标'}">${CROWN_SVG}</button>
                         <button class="player-del" data-del="${p.id}" title="移除">✕</button>
+                        <div class="player-grip" title="拖动排序">${GRIP_SVG}</div>
                         ${face}
                         <div class="player-name">${escapeHtml(p.name || '未命名')}</div>
                     </div>`;
@@ -836,14 +865,24 @@
                     }
                 });
             });
+            grid.querySelectorAll('.player-crown').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.crown;
+                    const p = goldData.players.find(x => x.id === id);
+                    const wasFinal = !!p.final;
+                    goldData.players.forEach(x => { x.final = (!wasFinal && x.id === id); });
+                    saveData().then(renderPlayers);
+                });
+            });
         }
 
-        /* 长按拖动排序（触摸：长按进入拖拽；鼠标：直接拖动）。横向滑动仍交给原生滚动。 */
+        /* 拖动排序：仅从顶部握把(.player-grip)拖拽，卡身横滑不受影响，不再冲突 */
         function initPlayerSortable() {
             const grid = document.getElementById('playerGrid');
             if (!grid || grid.dataset.sortableBound) return;
             grid.dataset.sortableBound = '1';
-            let el = null, pid = null, startX = 0, startY = 0, grabOffset = 0, dragging = false, longTimer = null, ptype = '';
+            let el = null, pid = null, startX = 0, startY = 0, grabOffset = 0, dragging = false;
 
             function startDrag() {
                 if (!el || dragging) return;
@@ -854,27 +893,18 @@
 
             grid.addEventListener('pointerdown', (e) => {
                 const card = e.target.closest('.player-card');
-                if (!card || e.target.closest('.player-del')) return;
-                el = card; pid = e.pointerId; ptype = e.pointerType;
+                if (!card) return;
+                if (e.target.closest('.player-del') || e.target.closest('.player-crown')) return;
+                if (!e.target.closest('.player-grip')) return; // 仅握把触发拖拽
+                el = card; pid = e.pointerId;
                 startX = e.clientX; startY = e.clientY; dragging = false;
                 const gr = grid.getBoundingClientRect();
                 grabOffset = e.clientX - (gr.left + card.offsetLeft);
-                if (ptype !== 'mouse') longTimer = setTimeout(startDrag, 350);
+                startDrag();
             });
 
             grid.addEventListener('pointermove', (e) => {
-                if (!el) return;
-                const dx = e.clientX - startX, dy = e.clientY - startY;
-                if (!dragging) {
-                    if (ptype === 'mouse') {
-                        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) startDrag();
-                        else return;
-                    } else {
-                        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) { clearTimeout(longTimer); el = null; return; }
-                        return;
-                    }
-                }
-                if (!dragging) return;
+                if (!el || !dragging) return;
                 e.preventDefault();
                 const gr = grid.getBoundingClientRect();
                 const desiredLeft = (e.clientX - gr.left) - grabOffset;
@@ -894,7 +924,6 @@
 
             function endDrag() {
                 if (!el) return;
-                clearTimeout(longTimer);
                 if (dragging) {
                     el.classList.remove('dragging');
                     el.style.transform = '';
