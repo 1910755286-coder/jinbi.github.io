@@ -268,10 +268,6 @@
             text-align: center; color: var(--muted);
             font-size: 12.5px; padding: 14px 0; line-height: 1.6;
         }
-        .player-tip {
-            color: var(--muted); font-size: 11px; text-align: right;
-            margin-top: 4px; letter-spacing: 0.2px; opacity: 0.85;
-        }
 
         /* 历史 */
         .history {
@@ -407,7 +403,6 @@
                 </button>
             </div>
             <div class="player-grid" id="playerGrid"></div>
-            <div class="player-tip" id="playerTip">长按拖动可排序 · 左右滑动查看</div>
             <div class="player-empty" id="playerEmpty">
                 还没有目标球员，点右上角「添加」<br>上传心仪球员的图片并命名
             </div>
@@ -812,15 +807,12 @@
         function renderPlayers() {
             const grid = document.getElementById('playerGrid');
             const empty = document.getElementById('playerEmpty');
-            const tip = document.getElementById('playerTip');
             if (goldData.players.length === 0) {
                 grid.innerHTML = '';
                 empty.style.display = 'block';
-                if (tip) tip.style.display = 'none';
                 return;
             }
             empty.style.display = 'none';
-            if (tip) tip.style.display = 'block';
             const html = goldData.players.map(p => {
                 const face = p.img
                     ? `<img class="player-photo" src="${p.img}" alt="${escapeHtml(p.name || '')}">`
