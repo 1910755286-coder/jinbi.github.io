@@ -220,15 +220,28 @@
             padding: 2px 8px; border-radius: 99px; letter-spacing: 0.4px;
         }
 
-        /* 目标球员（首屏置顶，竖版球星卡，图片完整显示） */
-        .player-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        /* 目标球员（首屏置顶，竖版球星卡；可左右滑动、长按拖动排序） */
+        .player-grid {
+            display: flex; gap: 12px; position: relative;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity; scrollbar-width: none;
+            padding-bottom: 6px;
+        }
+        .player-grid::-webkit-scrollbar { display: none; }
         .player-card {
-            position: relative; background: var(--surface);
+            position: relative; background: var(--surface); flex: 0 0 auto;
             border: 1px solid var(--border); border-radius: var(--radius-sm);
             overflow: hidden; box-shadow: var(--shadow-sm);
-            transition: transform 0.15s, box-shadow 0.2s;
+            width: clamp(118px, 42%, 168px);
+            scroll-snap-align: start; touch-action: pan-x;
+            user-select: none; -webkit-user-select: none;
+            transition: transform 0.15s, box-shadow 0.2s; cursor: grab;
         }
         .player-card:active { transform: scale(0.97); box-shadow: var(--shadow); }
+        .player-card.dragging {
+            transition: none; z-index: 5; box-shadow: var(--shadow);
+            cursor: grabbing; opacity: 0.96;
+        }
         .player-photo {
             width: 100%; aspect-ratio: 3 / 4; object-fit: contain; display: block;
             background: var(--surface-3);
@@ -245,30 +258,20 @@
             border-top: 1px solid var(--border);
         }
         .player-del {
-            position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
-            border-radius: 50%; background: rgba(22, 32, 27, 0.6); border: none; color: #fff;
-            font-size: 13px; line-height: 1; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;
+            position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; z-index: 2;
+            border-radius: 50%; background: rgba(22, 32, 27, 0.55); border: none; color: #fff;
+            font-size: 13px; line-height: 1; cursor: pointer; opacity: 1;
+            display: flex; align-items: center; justify-content: center;
         }
-        .player-card:hover .player-del, .player-card:active .player-del { opacity: 1; }
+        .player-del:active { background: rgba(223, 80, 72, 0.92); }
         .player-empty {
-            grid-column: 1 / -1; text-align: center; color: var(--muted);
+            text-align: center; color: var(--muted);
             font-size: 12.5px; padding: 14px 0; line-height: 1.6;
         }
-        .player-add {
-            background: var(--surface-2); border: 1.5px dashed rgba(47, 111, 237, 0.5);
-            border-radius: var(--radius-sm); aspect-ratio: 3 / 4;
-            cursor: pointer; color: var(--blue-deep); transition: border-color 0.2s, background 0.2s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+        .player-tip {
+            color: var(--muted); font-size: 11px; text-align: right;
+            margin-top: 4px; letter-spacing: 0.2px; opacity: 0.85;
         }
-        .player-add:active { border-color: var(--blue-deep); background: var(--blue-soft); }
-        .player-add .pa-ico {
-            width: 42px; height: 42px; border-radius: 14px; background: var(--surface);
-            border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center;
-            color: var(--blue-deep);
-        }
-        .player-add .pa-ico svg { width: 22px; height: 22px; }
-        .player-add .pa-txt { font-size: 12px; font-weight: 700; }
 
         /* 历史 */
         .history {
@@ -404,6 +407,7 @@
                 </button>
             </div>
             <div class="player-grid" id="playerGrid"></div>
+            <div class="player-tip" id="playerTip">长按拖动可排序 · 左右滑动查看</div>
             <div class="player-empty" id="playerEmpty">
                 还没有目标球员，点右上角「添加」<br>上传心仪球员的图片并命名
             </div>
@@ -808,18 +812,16 @@
         function renderPlayers() {
             const grid = document.getElementById('playerGrid');
             const empty = document.getElementById('playerEmpty');
+            const tip = document.getElementById('playerTip');
             if (goldData.players.length === 0) {
-                grid.innerHTML = `
-                    <div class="player-add" id="playerAddTile">
-                        <div class="pa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
-                        <div class="pa-txt">添加球员</div>
-                    </div>`;
-                document.getElementById('playerAddTile').onclick = () => document.getElementById('addPlayerBtn').click();
-                empty.style.display = 'none';
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+                if (tip) tip.style.display = 'none';
                 return;
             }
             empty.style.display = 'none';
-            let html = goldData.players.map(p => {
+            if (tip) tip.style.display = 'block';
+            const html = goldData.players.map(p => {
                 const face = p.img
                     ? `<img class="player-photo" src="${p.img}" alt="${escapeHtml(p.name || '')}">`
                     : `<div class="player-initial">${(p.name || '?').trim().charAt(0).toUpperCase()}</div>`;
@@ -830,14 +832,7 @@
                         <div class="player-name">${escapeHtml(p.name || '未命名')}</div>
                     </div>`;
             }).join('');
-            html += `
-                <div class="player-add" id="playerAddTile">
-                    <div class="pa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
-                    <div class="pa-txt">添加球员</div>
-                </div>`;
             grid.innerHTML = html;
-            document.getElementById('playerAddTile').onclick = () => document.getElementById('addPlayerBtn').click();
-
             grid.querySelectorAll('.player-del').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -849,6 +844,77 @@
                     }
                 });
             });
+        }
+
+        /* 长按拖动排序（触摸：长按进入拖拽；鼠标：直接拖动）。横向滑动仍交给原生滚动。 */
+        function initPlayerSortable() {
+            const grid = document.getElementById('playerGrid');
+            if (!grid || grid.dataset.sortableBound) return;
+            grid.dataset.sortableBound = '1';
+            let el = null, pid = null, startX = 0, startY = 0, grabOffset = 0, dragging = false, longTimer = null, ptype = '';
+
+            function startDrag() {
+                if (!el || dragging) return;
+                dragging = true;
+                el.classList.add('dragging');
+                try { el.setPointerCapture(pid); } catch (_) {}
+            }
+
+            grid.addEventListener('pointerdown', (e) => {
+                const card = e.target.closest('.player-card');
+                if (!card || e.target.closest('.player-del')) return;
+                el = card; pid = e.pointerId; ptype = e.pointerType;
+                startX = e.clientX; startY = e.clientY; dragging = false;
+                const gr = grid.getBoundingClientRect();
+                grabOffset = e.clientX - (gr.left + card.offsetLeft);
+                if (ptype !== 'mouse') longTimer = setTimeout(startDrag, 350);
+            });
+
+            grid.addEventListener('pointermove', (e) => {
+                if (!el) return;
+                const dx = e.clientX - startX, dy = e.clientY - startY;
+                if (!dragging) {
+                    if (ptype === 'mouse') {
+                        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) startDrag();
+                        else return;
+                    } else {
+                        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) { clearTimeout(longTimer); el = null; return; }
+                        return;
+                    }
+                }
+                if (!dragging) return;
+                e.preventDefault();
+                const gr = grid.getBoundingClientRect();
+                const desiredLeft = (e.clientX - gr.left) - grabOffset;
+                const desiredCenter = desiredLeft + el.offsetWidth / 2;
+                const sibs = [...grid.querySelectorAll('.player-card')].filter(c => c !== el);
+                let target = null;
+                for (const s of sibs) {
+                    if (desiredCenter < s.offsetLeft + s.offsetWidth / 2) { target = s; break; }
+                }
+                if (target) {
+                    grid.insertBefore(el, target);
+                } else if (grid.lastElementChild !== el) {
+                    grid.appendChild(el);
+                }
+                el.style.transform = `translateX(${desiredLeft - el.offsetLeft}px)`;
+            });
+
+            function endDrag() {
+                if (!el) return;
+                clearTimeout(longTimer);
+                if (dragging) {
+                    el.classList.remove('dragging');
+                    el.style.transform = '';
+                    try { el.releasePointerCapture(pid); } catch (_) {}
+                    const order = [...grid.querySelectorAll('.player-card')].map(c => c.dataset.id);
+                    goldData.players.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+                    saveData().then(renderPlayers);
+                }
+                el = null; dragging = false;
+            }
+            grid.addEventListener('pointerup', endDrag);
+            grid.addEventListener('pointercancel', endDrag);
         }
 
         function renderHistory() {
@@ -1042,6 +1108,7 @@
             try {
                 await initDB();
                 await render();
+                initPlayerSortable();
             } catch (err) {
                 console.error('初始化失败:', err);
                 showToast('初始化失败，使用本地存储', true);
