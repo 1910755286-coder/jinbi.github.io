@@ -220,7 +220,7 @@
             padding: 2px 8px; border-radius: 99px; letter-spacing: 0.4px;
         }
 
-        /* 目标球员（首屏置顶，竖版球星卡；可左右滑动、长按拖动排序） */
+        /* 目标球员（首屏置顶，竖版球星卡；可左右滑动查看） */
         .player-grid {
             display: flex; gap: 12px; position: relative;
             overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -238,25 +238,20 @@
             transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s, border-color 0.2s;
         }
         .player-card:active { transform: scale(0.97); box-shadow: var(--shadow); }
-        .player-card.dragging {
-            transition: none; z-index: 5; box-shadow: var(--shadow);
-            cursor: grabbing; opacity: 1 !important;
-        }
         .player-card.final {
             border: 2px solid var(--gold);
             box-shadow: 0 0 0 3px var(--gold-soft), var(--shadow);
             opacity: 1;
         }
+        .player-card.final-near { opacity: 0.5; }
         .player-card.dim { opacity: 0.8; }
-        .player-grip {
-            position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 3;
-            width: 30px; height: 16px; border-radius: 8px;
-            background: rgba(255,255,255,0.78); color: var(--muted);
-            display: flex; align-items: center; justify-content: center; cursor: grab;
-            touch-action: none; box-shadow: 0 1px 3px rgba(20,50,90,0.15);
+        .final-name {
+            display: flex; align-items: center; gap: 6px;
+            margin: -4px 0 10px 2px;
+            color: var(--gold); font-size: 13px; font-weight: 800; letter-spacing: 0.3px;
         }
-        .player-grip svg { width: 18px; height: 18px; }
-        .player-grip:active { cursor: grabbing; background: #fff; }
+        .final-name::before { content: "👑"; font-size: 13px; line-height: 1; }
+        .final-name[hidden] { display: none; }
         .player-crown {
             position: absolute; top: 6px; left: 6px; width: 22px; height: 22px; z-index: 3;
             border: none; border-radius: 50%; background: rgba(22, 32, 27, 0.45); color: #fff;
@@ -425,6 +420,7 @@
                     添加
                 </button>
             </div>
+            <div class="final-name" id="finalName" hidden></div>
             <div class="player-grid" id="playerGrid"></div>
             <div class="player-empty" id="playerEmpty">
                 还没有目标球员，点右上角「添加」<br>上传心仪球员的图片并命名
@@ -829,31 +825,41 @@
 
         function renderPlayers() {
             const CROWN_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.2 3.1L12 4l4.8 7.1L21 8l-1.6 11H4.6L3 8z"/></svg>';
-            const GRIP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
             const grid = document.getElementById('playerGrid');
             const empty = document.getElementById('playerEmpty');
             if (goldData.players.length === 0) {
                 grid.innerHTML = '';
                 empty.style.display = 'block';
+                document.getElementById('finalName').hidden = true;
                 return;
             }
             empty.style.display = 'none';
             const hasFinal = goldData.players.some(p => p.final);
-            const html = goldData.players.map(p => {
+            // 显示顺序：最终目标球员永远排在第一位
+            const disp = goldData.players.slice();
+            let finalIdx = disp.findIndex(p => p.final);
+            if (finalIdx > 0) { const fp = disp.splice(finalIdx, 1)[0]; disp.unshift(fp); finalIdx = 0; }
+            const html = disp.map((p, i) => {
                 const face = p.img
                     ? `<img class="player-photo" src="${p.img}" alt="${escapeHtml(p.name || '')}">`
                     : `<div class="player-initial">${(p.name || '?').trim().charAt(0).toUpperCase()}</div>`;
-                const cls = p.final ? ' final' : (hasFinal ? ' dim' : '');
+                let cls = '';
+                if (p.final) cls = ' final';
+                else if (hasFinal && Math.abs(i - finalIdx) === 1) cls = ' final-near';
+                else if (hasFinal) cls = ' dim';
                 return `
                     <div class="player-card${cls}" data-id="${p.id}">
                         <button class="player-crown${p.final ? ' active' : ''}" data-crown="${p.id}" title="${p.final ? '取消最终目标' : '设为最终目标'}">${CROWN_SVG}</button>
                         <button class="player-del" data-del="${p.id}" title="移除">✕</button>
-                        <div class="player-grip" title="拖动排序">${GRIP_SVG}</div>
                         ${face}
                         <div class="player-name">${escapeHtml(p.name || '未命名')}</div>
                     </div>`;
             }).join('');
             grid.innerHTML = html;
+            const banner = document.getElementById('finalName');
+            const fp = goldData.players.find(p => p.final);
+            if (fp) { banner.textContent = '最终目标：' + (fp.name || '未命名'); banner.hidden = false; }
+            else { banner.hidden = true; }
             grid.querySelectorAll('.player-del').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -875,67 +881,6 @@
                     saveData().then(renderPlayers);
                 });
             });
-        }
-
-        /* 拖动排序：仅从顶部握把(.player-grip)拖拽，卡身横滑不受影响，不再冲突 */
-        function initPlayerSortable() {
-            const grid = document.getElementById('playerGrid');
-            if (!grid || grid.dataset.sortableBound) return;
-            grid.dataset.sortableBound = '1';
-            let el = null, pid = null, startX = 0, startY = 0, grabOffset = 0, dragging = false;
-
-            function startDrag() {
-                if (!el || dragging) return;
-                dragging = true;
-                el.classList.add('dragging');
-                try { el.setPointerCapture(pid); } catch (_) {}
-            }
-
-            grid.addEventListener('pointerdown', (e) => {
-                const card = e.target.closest('.player-card');
-                if (!card) return;
-                if (e.target.closest('.player-del') || e.target.closest('.player-crown')) return;
-                if (!e.target.closest('.player-grip')) return; // 仅握把触发拖拽
-                el = card; pid = e.pointerId;
-                startX = e.clientX; startY = e.clientY; dragging = false;
-                const gr = grid.getBoundingClientRect();
-                grabOffset = e.clientX - (gr.left + card.offsetLeft);
-                startDrag();
-            });
-
-            grid.addEventListener('pointermove', (e) => {
-                if (!el || !dragging) return;
-                e.preventDefault();
-                const gr = grid.getBoundingClientRect();
-                const desiredLeft = (e.clientX - gr.left) - grabOffset;
-                const desiredCenter = desiredLeft + el.offsetWidth / 2;
-                const sibs = [...grid.querySelectorAll('.player-card')].filter(c => c !== el);
-                let target = null;
-                for (const s of sibs) {
-                    if (desiredCenter < s.offsetLeft + s.offsetWidth / 2) { target = s; break; }
-                }
-                if (target) {
-                    grid.insertBefore(el, target);
-                } else if (grid.lastElementChild !== el) {
-                    grid.appendChild(el);
-                }
-                el.style.transform = `translateX(${desiredLeft - el.offsetLeft}px)`;
-            });
-
-            function endDrag() {
-                if (!el) return;
-                if (dragging) {
-                    el.classList.remove('dragging');
-                    el.style.transform = '';
-                    try { el.releasePointerCapture(pid); } catch (_) {}
-                    const order = [...grid.querySelectorAll('.player-card')].map(c => c.dataset.id);
-                    goldData.players.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-                    saveData().then(renderPlayers);
-                }
-                el = null; dragging = false;
-            }
-            grid.addEventListener('pointerup', endDrag);
-            grid.addEventListener('pointercancel', endDrag);
         }
 
         function renderHistory() {
@@ -1129,7 +1074,6 @@
             try {
                 await initDB();
                 await render();
-                initPlayerSortable();
             } catch (err) {
                 console.error('初始化失败:', err);
                 showToast('初始化失败，使用本地存储', true);
